@@ -88,13 +88,21 @@ source = { virtual = "." }
 dependencies = [
     { name = "beancount" },
     { name = "beangulp" },
+    { name = "ibflex" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "beancount", specifier = ">=3.1.0" },
     { name = "beangulp", specifier = ">=0.2.0" },
+    { name = "ibflex", specifier = ">=0.15" },
 ]
+
+[[package]]
+name = "ibflex"
+version = "0.15"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/32/e2/d15814fe915af8d8c6a03938d7d18279ecb2b32d2a6348160a1650d36078/ibflex-0.15.tar.gz", hash = "sha256:e1ab295ff8d615f1279287d6214752110c7faa9493fcffd7c5519e718d3004a7", size = 29979, upload-time = "2021-01-13T01:18:08.919Z" }
 
 [[package]]
 name = "lxml"
