@@ -6,7 +6,7 @@ Since Beancount provides an ingestion framework, beangulp, the tool should utili
 
 # Run
 ```sh
-uv run python import.py extract ./downloads > tmp.beancount
+uv run python import.py extract ./downloads > out/tmp.beancount
 ```
 
 # Docs

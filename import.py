@@ -2,16 +2,17 @@
 The main import script.
 '''
 
+from beancount.core import data  # type: ignore
+import beangulp  # type: ignore
+
 # from importers import acme
 # from importers import csvbank
 # from importers import ofx
 # from importers import utrade
-
-from beancount.core import data  # type: ignore
-import beangulp  # type: ignore
+from importers import ibkr
 
 
-importers: list[beangulp.ImporterProtocol] = [
+importers = [
     # utrade.Importer(
     #     "USD",
     #     "Assets:US:UTrade",
@@ -24,6 +25,7 @@ importers: list[beangulp.ImporterProtocol] = [
     # ofx.Importer("379700001111222", "Liabilities:US:CreditCard", "bofa"),
     # acme.Importer("Assets:US:ACMEBank"),
     # csvbank.Importer("Assets:US:CSVBank", "USD"),
+    ibkr.Importer()
 ]
 
 
