@@ -4,6 +4,7 @@ Creating IBKR importer from scratch.
 
 from collections import defaultdict
 from datetime import date
+from loguru import logger
 
 import beangulp # type: ignore
 import beangulp.importer # type: ignore
@@ -16,14 +17,20 @@ class Importer(beangulp.Importer):
     """IBKR importer"""
 
     def __init__(self, *args, **kwargs):
+        logger.debug("Initializing IBKR importer")
+
         super().__init__(*args, **kwargs)
 
     @property  # type: ignore
     def name(self) -> str:
+        logger.debug("Getting importer name")
+
         return "IBKR importer"
 
     def identify(self, filepath: str) -> bool:
         """Indicates whether the importer can handle the given file"""
+        logger.debug(f"Identifying {filepath}")
+
         # File is xml
         if filepath.endswith(".xml"):
             return True
@@ -38,6 +45,8 @@ class Importer(beangulp.Importer):
 
     def account(self, filepath: str) -> data.Account:
         """Return the account associated with the given file."""
+        logger.debug(f"Getting account for {filepath}")
+
         return "ib-aus"
 
     def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
@@ -48,6 +57,8 @@ class Importer(beangulp.Importer):
         Deduplication is done against these.
         A list of imported directives should be returned.
         """
+        logger.debug(f"Extracting from {filepath}")
+
         # if False and self.use_existing_holdings and existing_entries is not None:
         #     self.holdings_map = self.get_holdings_map(existing_entries)
         # else:
@@ -70,10 +81,14 @@ class Importer(beangulp.Importer):
 
     def date(self, filepath: str) -> date | None:
         """Archival date of the file"""
-        raise NotImplementedError
-        # return super().date(filepath)
+        logger.debug(f"Getting date for {filepath}")
+
+        return super().date(filepath)
+        # raise NotImplementedError
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
-        raise NotImplementedError
-        # return super().deduplicate(entries, existing)
+        logger.debug(f"Deduplicating {len(entries)} entries")
+
+        return super().deduplicate(entries, existing)
+        # raise NotImplementedError
