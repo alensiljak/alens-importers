@@ -31,7 +31,7 @@ from beancount.core import amount, data, flags, position, realization
 from ibflex import Types, parser
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
 
-from .mixins import IdentifyMixin
+from mixins import IdentifyMixin
 
 
 class Importer(IdentifyMixin, beangulp.Importer):
