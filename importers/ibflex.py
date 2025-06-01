@@ -185,23 +185,23 @@ class Importer(beangulp.Importer):
         pershare = ""
 
         # meta = {"isin": isin, "per_share": pershare}
-        meta = {}
+        meta = {"isin": isin}
 
         account = ""
+        type_ = None
         if row.type == CashAction.WHTAX:
             account = self.get_account_name(
                 AccountTypes.WHTAX, row.symbol, row.currency
             )
+            type_ = CashAction.DIVIDEND
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             account = self.get_account_name(
                 AccountTypes.DIVIDEND, row.symbol, row.currency
             )
-        else:
-            # TODO : implement
-            # account = self.get_div_income_account(row.currency, row.symbol)
-            # type_ = row.type
+            type_ = row.type
             meta["div"] = True
-        # meta["div_type"] = row.type.value
+
+        meta["div_type"] = type_.value
 
         postings = [
             data.Posting(account, -amount_, None, None, None, None),
@@ -258,15 +258,18 @@ class Importer(beangulp.Importer):
                 if e != d:
                     d.postings.extend(e.postings)
                     entries.remove(e)
+
+            # clean-up meta tags
             del d.meta["div_type"]
             del d.meta["div"]
+            del d.meta["isin"]
+
             # merge postings with the same account
             grouped_postings = defaultdict(list)
             for p in d.postings:
                 grouped_postings[p.account].append(p)
             d.postings.clear()
             for account, postings in grouped_postings.items():
-                units = [p.units for p in postings if isinstance(p.units, data.Amount)]
                 d.postings.append(
                     data.Posting(
                         account,

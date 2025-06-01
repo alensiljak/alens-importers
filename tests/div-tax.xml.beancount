@@ -2,10 +2,10 @@
 ;; Date: 2025-05-22T20:41:57
 ;; Name: div-tax.xml
 
-2025-02-21 * "OPI Distribution" ""
-  Income:Investment:Dividends:IB-EUR:OPI  -0.52 EUR
-  Expenses:Tax:WithholdingTax:IB-EUR   0.08 USD
-  Assets:Investments:IB-EUR:Cash-EUR
+2025-02-20 * "OPI distribution" ""
+  Income:Investments:Dividend:IB:USD:OPI  -0.52 USD
+  Assets:Investments:IB:Cash-USD           0.44 USD
+  Expenses:Investments:IB:WithholdingTax   0.08 USD
 
 2025-05-22 balance Assets:Investments:IB:Cash-AUD                  100 AUD
 2025-05-22 balance Assets:Investments:IB:Cash-EUR                  200 EUR
