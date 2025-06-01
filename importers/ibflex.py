@@ -40,7 +40,7 @@ class Importer(beangulp.Importer):
         return identify(matchers, None, cache.get_file(filepath))
 
     def account(self, filepath: str) -> data.Account:
-        """Return the account associated with the given file."""
+        """Return the archiving account associated with the given file."""
         logger.debug(f"Getting account for {filepath}")
 
         # TODO : return the correct account
@@ -54,14 +54,17 @@ class Importer(beangulp.Importer):
         Deduplication is done against these.
         A list of imported directives should be returned.
         """
+        from ibflex import Types, parser
+        # from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
+
         logger.debug(f"Extracting from {filepath}")
 
         # if False and self.use_existing_holdings and existing_entries is not None:
         #     self.holdings_map = self.get_holdings_map(existing_entries)
         # else:
         #     self.holdings_map = defaultdict(list)
-        # statement = parser.parse(open(filename))
-        # assert isinstance(statement, Types.FlexQueryResponse)
+        statement = parser.parse(open(filepath, "r", encoding="utf-8"))
+        assert isinstance(statement, Types.FlexQueryResponse)
         # poi = statement.FlexStatements[0]  # point of interest
         # transactions = (
         #     self.Trades(poi.Trades)

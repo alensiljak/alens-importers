@@ -23,7 +23,7 @@ importers = [
     # acme.Importer("Assets:US:ACMEBank"),
     # csvbank.Importer("Assets:US:CSVBank", "USD"),
     ibflex.Importer(),
-    ibkr.Importer(),
+    # ibkr.Importer(),
 ]
 
 
@@ -50,7 +50,7 @@ def clean_up_descriptions(extracted_entries):
 
 
 def process_extracted_entries(extracted_entries_list, ledger_entries):
-    """Example filter function; clean up cruft from narrations.
+    """Example filter function;
 
     Args:
       extracted_entries_list: A list of (filename, entries) pairs, where
@@ -72,7 +72,7 @@ def process_extracted_entries(extracted_entries_list, ledger_entries):
 # These hooks are used by the beangulp importer to modify or process extracted entries
 # before final ingestion. In this case, the list contains a single hook function
 # that cleans up transaction descriptions and payee information.
-hooks = [process_extracted_entries, detect_transfers]
+hooks = [detect_transfers]
 
 
 if __name__ == "__main__":
