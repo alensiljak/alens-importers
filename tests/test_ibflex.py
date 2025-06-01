@@ -37,22 +37,26 @@ def run_importer_test(importer, capsys):
     assert "ERROR" not in captured.out
 
 
-def run_importer_test_with_existing_entries(importer, document):
+def run_importer_test_with_existing_entries(importer, filename):
     """Runs the test with existing entries"""
     # base_path = os.path.abspath(f"tests/importers/{importer.account('')}")
     base_path = os.path.abspath("tests/")
-    expected_filename = os.path.join(base_path, f"{document}.extract")
-    document = os.path.join(base_path, document)
-
+    expected_filename = os.path.join(base_path, f"{filename}.beancount")
+    
+    document = os.path.join(base_path, filename)
     existing_entries_filename = document + ".beancount"
     existing_entries = loader.load_file(
         os.path.join(base_path, existing_entries_filename)
     )[0]
+
     account = importer.account(document)
     date = importer.date(document)
     name = importer.filename(document)
     entries = extract.extract_from_file(importer, document, existing_entries)
     diff = compare_expected(expected_filename, account, date, name, entries)
+
+    if diff:
+        print(diff)
 
     assert not diff
 
@@ -61,12 +65,10 @@ def test_run_importer():
     """Use the default run method"""
     run_importer_test(ibflex.Importer(ibflex_config), None)
 
-
 def test_div_tax():
     """Divident + tax"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "div-tax.xml")
-
 
 def test_tax_reversal():
     """WhTax reversal"""

@@ -2,10 +2,12 @@
 Creating IBKR importer from scratch.
 """
 
+import os
 import re
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from typing import Optional
 
 import beangulp  # type: ignore
 from beancount.core import amount, data, flags, position, realization
@@ -62,6 +64,10 @@ class Importer(beangulp.Importer):
 
         # TODO : return the correct account
         return "ib-aus"
+
+    def filename(self, filepath: str) -> Optional[str]:
+        '''Returns the archival filename for the report'''
+        return os.path.basename(filepath)
 
     def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
         """
@@ -192,6 +198,9 @@ class Importer(beangulp.Importer):
         )
 
         assert isinstance(row.reportDate, date)
+
+        # row.dateTime = the effective/book date.
+        # row.reportDate = the date when the transaction happened and appeared in the report.
 
         return data.Transaction(
             meta,

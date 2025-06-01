@@ -22,6 +22,12 @@ Install the latest beangulp (0.3.0) from a git clone instead.
 uv pip install -e <path to beangulp>
 ```
 
+# Testing
+```sh
+uv run pytest <file_path>::<test_function_name>
+uv run pytest <file_path>::<TestClassName>::<test_method_name>
+```
+
 # Docs
 Following the examples at beangulp [repo](https://github.com/beancount/beangulp/tree/master/examples/).
 
@@ -31,3 +37,4 @@ To configure the Flex report, see the [instructions](report-configuration.md).
 - Beangulp [repo](https://github.com/beancount/beangulp)
 - beancounttools, [repo](https://github.com/tarioch/beancounttools)
 - uabean, [repo](https://github.com/OSadovy/uabean/)
+- Red's Importers
