@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "import.py",
             "console": "integratedTerminal",
-            "args": "identify"
+            "args": ["identify", "./downloads"]
         },
         {
             "name": "Debug: Extract",

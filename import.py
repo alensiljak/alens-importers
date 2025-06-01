@@ -1,12 +1,14 @@
-'''
+"""
 The main import script.
-'''
+"""
 
 from beancount.core import data  # type: ignore
 import beangulp  # type: ignore
 
-from importers import ibkr
+from uabean.importers import ibkr
+from uabean.hooks import detect_transfers
 
+from importers import ibflex
 
 importers = [
     # utrade.Importer(
@@ -21,7 +23,8 @@ importers = [
     # ofx.Importer("379700001111222", "Liabilities:US:CreditCard", "bofa"),
     # acme.Importer("Assets:US:ACMEBank"),
     # csvbank.Importer("Assets:US:CSVBank", "USD"),
-    ibkr.Importer()
+    ibflex.Importer(),
+    ibkr.Importer(),
 ]
 
 
@@ -70,7 +73,7 @@ def process_extracted_entries(extracted_entries_list, ledger_entries):
 # These hooks are used by the beangulp importer to modify or process extracted entries
 # before final ingestion. In this case, the list contains a single hook function
 # that cleans up transaction descriptions and payee information.
-hooks = [process_extracted_entries]
+hooks = [process_extracted_entries, detect_transfers]
 
 
 if __name__ == "__main__":

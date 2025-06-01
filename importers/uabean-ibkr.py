@@ -7,9 +7,11 @@ Supports selling short, corporate actions and more.
 
 It takes FlexQuery xml as input. The report should include all fields for these sections:
 * Trades
- * Options:Executions, Closed Lots
+ * Options:Executions, Closed Lots
 * Cash Transactions
- * Options:Dividends, Payment in Lieu of Dividends, Withholding Tax, 871(m) Withholding, Advisor Fees, Other Fees, Deposits/Withdrawals, Carbon Credits, Bill Pay, Broker Interest Paid, Broker Interest Received, Broker Fees, Bond Interest Paid, Bond Interest Received, Price Adjustments, Commission Adjustments, Detail
+ * Options:Dividends, Payment in Lieu of Dividends, Withholding Tax, 871(m) Withholding, Advisor Fees, Other Fees, 
+    Deposits/Withdrawals, Carbon Credits, Bill Pay, Broker Interest Paid, Broker Interest Received, Broker Fees, 
+    Bond Interest Paid, Bond Interest Received, Price Adjustments, Commission Adjustments, Detail
 * Cash Report
  * Options:Currency Breakout
 * Corporate Actions
