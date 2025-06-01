@@ -9,6 +9,13 @@ from uabean.importers import ibkr
 
 from importers import ibflex
 
+ibflex_config = {
+    "cash_account": "Assets:Investments:IB:Cash",
+    "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
+    "interest_account": "Income:Investments:IB:{symbol}:Interest",
+    "whtax_account": "Expenses:Investments:IB:WithholdingTax",
+}
+
 importers = [
     # utrade.Importer(
     #     "USD",
@@ -22,7 +29,7 @@ importers = [
     # ofx.Importer("379700001111222", "Liabilities:US:CreditCard", "bofa"),
     # acme.Importer("Assets:US:ACMEBank"),
     # csvbank.Importer("Assets:US:CSVBank", "USD"),
-    ibflex.Importer(),
+    ibflex.Importer(ibflex_config),
     # ibkr.Importer(),
 ]
 
