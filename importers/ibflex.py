@@ -4,18 +4,23 @@ Creating IBKR importer from scratch.
 
 from collections import defaultdict
 from datetime import date
+import re
+import beangulp.importers
+import beangulp.importers.mixins
+import beangulp.importers.mixins.identifier
 from loguru import logger
 
 import beangulp  # type: ignore
 import beangulp.importer  # type: ignore
 from beancount.core import data
-from beancount.core.data import Entries
-from ibflex import Types, parser
-from lxml import etree
+# from beancount.core.data import Entries
+from beangulp import cache
+
+# from ibflex import Types, parser
 
 
 class Importer(beangulp.Importer):
-    """IBKR importer"""
+    """IBKR Flex Query XML importer for Beancount"""
 
     def __init__(self, *args, **kwargs):
         logger.debug("Initializing IBKR importer")
@@ -30,26 +35,25 @@ class Importer(beangulp.Importer):
 
     def identify(self, filepath: str) -> bool:
         """Indicates whether the importer can handle the given file"""
+        import collections
+        from beangulp.importers.mixins.identifier import _PARTS, identify
+
         logger.debug(f"Identifying {filepath}")
 
         # File is xml
-        if not filepath.endswith(".xml"):
-            return False
-
-        # with open(filepath, 'r', encoding='utf-8') as f:
-        #     content = f.read()
         # The main XML tag is FlexQueryResponse
-        tree = etree.parse(filepath, parser=etree.XMLParser(encoding="utf-8"))
-        root = tree.getroot()
-        if not root.tag == "FlexQueryResponse":
-            return False
+        matchers = {
+            "mime": [re.compile(r"text/xml")],
+            "content": [re.compile(r"<FlexQueryResponse ")],
+        }
 
-        return True
+        return identify(matchers, None, cache.get_file(filepath))
 
     def account(self, filepath: str) -> data.Account:
         """Return the account associated with the given file."""
         logger.debug(f"Getting account for {filepath}")
 
+        # TODO : return the correct account
         return "ib-aus"
 
     def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
