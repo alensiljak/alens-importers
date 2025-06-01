@@ -96,3 +96,8 @@ def test_simple_div():
     """Simple dividend"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "simple-div.xml")
+
+def test_simple_whtax():
+    """Simple withholding tax"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "simple-whtax.xml")
