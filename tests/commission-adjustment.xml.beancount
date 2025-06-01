@@ -3,8 +3,8 @@
 ;; Name: commission-adjustment.xml
 
 2025-05-08 * "Commission Adjustments" "cash"
-  Assets:Investments:IB-EUR:Cash-EUR   0.37013125 USD
-  Assets:Transfers                    -0.37013125 USD
+  Expenses:Commissions:IB         -0.37013125 USD
+  Assets:Investments:IB:Cash-USD   0.37013125 USD
 
 2025-05-22 balance Assets:Investments:IB:Cash-AUD                  100 AUD
 2025-05-22 balance Assets:Investments:IB:Cash-EUR                  200 EUR

@@ -20,6 +20,7 @@ ibflex_config = {
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "dividend_payee": "{symbol} distribution",
     "interest_account": "Income:Investments:IB:{symbol}:Interest",
+    "fees_account": "Expenses:Commissions:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
     "symbols": fund_codes,
 }

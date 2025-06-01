@@ -27,6 +27,7 @@ class AccountTypes(str, Enum):
     STOCK = "stock_account"
     DIVIDEND = "dividend_account"
     INTEREST = "interest_account"
+    FEES = "fees_account"
     WHTAX = "whtax_account"
 
 
@@ -128,6 +129,7 @@ class Importer(beangulp.Importer):
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
         account_name = self.config.get(acct_type)
+        assert isinstance(account_name, str)
 
         # Populate template fields.
         if symbol is not None:
@@ -149,9 +151,7 @@ class Importer(beangulp.Importer):
                 # transactions.append(self.Interest_from_row(index, row))
                 pass
             elif row.type in (CashAction.FEES, CashAction.COMMADJ):
-                # TODO : implement
-                # transactions.append(self.fee_from_row(index, row))
-                pass
+                transactions.append(self.fee_from_row(index, row))
             elif row.type in (
                 CashAction.WHTAX,
                 CashAction.DIVIDEND,
@@ -178,11 +178,9 @@ class Importer(beangulp.Importer):
         # Find ISIN in description in parentheses
         # isin = re.findall(r"\(([a-zA-Z]{2}[a-zA-Z0-9]{9}\d)\)", text)[0]
         isin = row.isin
-        # TODO: fix
         # pershare_match = re.search(r"(\d*[.]\d*)(\D*)(PER SHARE)", text, re.IGNORECASE)
         # payment in lieu of a dividend does not have a PER SHARE in description
         # pershare = pershare_match.group(1) if pershare_match else ""
-        pershare = ""
 
         # meta = {"isin": isin, "per_share": pershare}
         meta = {"isin": isin}
@@ -344,6 +342,54 @@ class Importer(beangulp.Importer):
             )
 
         return txns
+
+    def fee_from_row(self, idx, row):
+        """Converts fees to a beancount transaction"""
+        amount_ = amount.Amount(row.amount, row.currency)
+        text = row.description
+        # TODO: fix this. Add description field to the report.
+        narration = row.description
+        # try:
+        #     month = re.findall(r"\w{3} \d{4}", text)[0]
+        #     narration = " ".join(["Fee", row.currency, month])
+        # except IndexError:
+        #     narration = text
+
+        # make the postings, two for fees
+        postings = [
+            # from
+            data.Posting(
+                # self.get_fees_account(row.currency), -amount_, None, None, None, None
+                self.get_account_name(AccountTypes.FEES, row.symbol, row.currency),
+                -amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+            # to
+            data.Posting(
+                self.get_account_name(AccountTypes.CASH, row.symbol, row.currency),
+                amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+        ]
+        meta = data.new_metadata(__file__, 0, {"descr": text})
+        return data.Transaction(
+            meta,
+            row.reportDate,
+            flags.FLAG_OKAY,
+            # TODO: check payee
+            "IB",  # payee
+            narration,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
+
 
     # def stock_trades(self, trades):
     #     """Generates transactions for IB stock trades.
