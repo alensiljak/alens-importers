@@ -5,10 +5,6 @@ The main import script.
 from beancount.core import data  # type: ignore
 import beangulp  # type: ignore
 
-# from importers import acme
-# from importers import csvbank
-# from importers import ofx
-# from importers import utrade
 from importers import ibkr
 
 

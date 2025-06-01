@@ -27,6 +27,7 @@ from datetime import timedelta
 
 import beangulp
 from beancount.core import amount, data, flags, position, realization
+
 # from beancount.core.number import Decimal
 from ibflex import Types, parser
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
@@ -97,15 +98,15 @@ class Importer(IdentifyMixin, beangulp.Importer):
     def get_pnl_account(self, symbol):
         return self.get_account_name(self.bnl_account, symbol=symbol)
 
-    def account(self, filename):
+    def account(self, filepath):
         return self.document_archiving_account
 
-    def extract(self, filename, existing_entries=None):
+    def extract(self, filepath, existing_entries=None):
         if self.use_existing_holdings and existing_entries is not None:
             self.holdings_map = self.get_holdings_map(existing_entries)
         else:
             self.holdings_map = defaultdict(list)
-        statement = parser.parse(open(filename))
+        statement = parser.parse(open(filepath))
         assert isinstance(statement, Types.FlexQueryResponse)
         poi = statement.FlexStatements[0]  # point of interest
         transactions = (
@@ -515,7 +516,7 @@ class Importer(IdentifyMixin, beangulp.Importer):
                 holding[0] -= lot.quantity
             return price
         raise ValueError(
-            f"do not have {lot.symbol} bought at {lot.openDateTime.date()}: want {lot.quantity} at {lot.cost} ({lot.cost/lot.quantity} per unit). have {holdings}"
+            f"do not have {lot.symbol} bought at {lot.openDateTime.date()}: want {lot.quantity} at {lot.cost} ({lot.cost / lot.quantity} per unit). have {holdings}"
         )
 
     def Balances(self, cr):
@@ -915,6 +916,7 @@ def iter_trades_with_lots(trades):
 
 
 def get_test_importer():
+    '''Instantiate the importer'''
     return Importer()
 
 
