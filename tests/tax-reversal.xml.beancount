@@ -3,8 +3,8 @@
 ;; Name: tax-reversal.xml
 
 2024-11-15 * "Withholding Tax" "cash"
-  Assets:Investments:IB:Cash               0.08 USD
   Expenses:Investments:IB:WithholdingTax  -0.08 USD
+  Assets:Investments:IB:Cash-USD           0.08 USD
 
 2025-05-22 balance Assets:Investments:IB:Cash-AUD                  100 AUD
 2025-05-22 balance Assets:Investments:IB:Cash-EUR                  200 EUR
