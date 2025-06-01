@@ -2,6 +2,7 @@
 Creating IBKR importer from scratch.
 """
 
+from collections import defaultdict
 import os
 import re
 from datetime import date, timedelta
@@ -66,7 +67,7 @@ class Importer(beangulp.Importer):
         return "ib-aus"
 
     def filename(self, filepath: str) -> Optional[str]:
-        '''Returns the archival filename for the report'''
+        """Returns the archival filename for the report"""
         return os.path.basename(filepath)
 
     def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
@@ -91,13 +92,13 @@ class Importer(beangulp.Importer):
 
         transactions = (
             #     self.Trades(statement.Trades) +
-            self.cash_transactions(statement.CashTransactions)
+            self.cash_transactions(statement.CashTransactions) +
             #     + self.Balances(statement.CashReport)
-            + self.balances(statement.CashReport)
+            self.balances(statement.CashReport)
             #     + self.corporate_actions(statement.CorporateActions)
         )
 
-        # transactions = self.merge_dividend_and_withholding(transactions)
+        transactions = self.merge_dividend_and_withholding(transactions)
         # # self.adjust_closing_trade_cost_basis(transactions)
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
 
@@ -162,7 +163,8 @@ class Importer(beangulp.Importer):
         # pershare = pershare_match.group(1) if pershare_match else ""
         pershare = ""
 
-        meta = {"isin": isin, "per_share": pershare}
+        # meta = {"isin": isin, "per_share": pershare}
+        meta = {}
 
         account = ""
         if row.type == CashAction.WHTAX:
@@ -173,7 +175,6 @@ class Importer(beangulp.Importer):
             account = self.get_account_name(
                 AccountTypes.DIVIDEND, row.symbol, row.currency
             )
-            type_ = row.type
         else:
             # TODO : implement
             # account = self.get_div_income_account(row.currency, row.symbol)
@@ -192,7 +193,7 @@ class Importer(beangulp.Importer):
                 None,
             ),
         ]
-        meta = data.new_metadata(
+        metadata = data.new_metadata(
             "dividend",
             0,
             meta,
@@ -204,15 +205,58 @@ class Importer(beangulp.Importer):
         # row.reportDate = the date when the transaction happened and appeared in the report.
 
         return data.Transaction(
-            meta,
+            metadata,
             row.reportDate,
             flags.FLAG_OKAY,
-            row.symbol,  # payee
+            self.config.get("dividend_payee").replace("{symbol}", row.symbol),
             text,
             data.EMPTY_SET,
             data.EMPTY_SET,
             postings,
         )
+
+    def merge_dividend_and_withholding(self, entries):
+        """This merges together transactions for earned dividends with the witholding tax ones,
+        as they can be on different lines in the cash transactions statement.
+        """
+        grouped = defaultdict(list)
+        for e in entries:
+            if not isinstance(e, data.Transaction):
+                continue
+            if "div_type" in e.meta and "isin" in e.meta:
+                grouped[(e.date, e.payee, e.meta["div_type"])].append(e)
+        for group in grouped.values():
+            if len(group) < 2:
+                continue
+            # merge
+            try:
+                d = [e for e in group if "div" in e.meta][0]
+            except IndexError:
+                continue
+            for e in group:
+                if e != d:
+                    d.postings.extend(e.postings)
+                    entries.remove(e)
+            del d.meta["div_type"]
+            del d.meta["div"]
+            # merge postings with the same account
+            grouped_postings = defaultdict(list)
+            for p in d.postings:
+                grouped_postings[p.account].append(p)
+            d.postings.clear()
+            for account, postings in grouped_postings.items():
+                units = [p.units for p in postings if isinstance(p.units, data.Amount)]
+                d.postings.append(
+                    data.Posting(
+                        account,
+                        reduce(amount_add, (p.units for p in postings)),
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                )
+        return entries
 
     def date(self, filepath: str) -> date | None:
         """Archival date of the file"""
@@ -248,3 +292,51 @@ class Importer(beangulp.Importer):
         logger.debug(f"Deduplicating {len(entries)} entries")
 
         return super().deduplicate(entries, existing)
+
+
+_initial_missing = object()
+
+
+def reduce(function, sequence, initial=_initial_missing):
+    """
+    reduce(function, iterable[, initial], /) -> value
+
+    Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
+
+    This effectively reduces the iterable to a single value.  If initial is present,
+    it is placed before the items of the iterable in the calculation, and serves as
+    a default when the iterable is empty.
+
+    For example, reduce(lambda x, y: x+y, [1, 2, 3, 4, 5])
+    calculates ((((1 + 2) + 3) + 4) + 5).
+    """
+
+    it = iter(sequence)
+
+    if initial is _initial_missing:
+        try:
+            value = next(it)
+        except StopIteration:
+            raise TypeError(
+                "reduce() of empty iterable with no initial value"
+            ) from None
+    else:
+        value = initial
+
+    for element in it:
+        value = function(value, element)
+
+    return value
+
+
+def amount_add(a1, a2):
+    """
+    add two amounts
+    """
+    if a1.currency == a2.currency:
+        quant = a1.number + a2.number
+        return amount.Amount(quant, a1.currency)
+    else:
+        raise ValueError(
+            f"Cannot add amounts of differnent currencies: {a1.currency} and {a2.currency}"
+        )

@@ -15,6 +15,7 @@ from importers import ibflex
 ibflex_config = {
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
+    "dividend_payee": "{symbol} distribution",
     "interest_account": "Income:Investments:IB:{symbol}:Interest",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
 }
@@ -42,12 +43,13 @@ def run_importer_test_with_existing_entries(importer, filename):
     # base_path = os.path.abspath(f"tests/importers/{importer.account('')}")
     base_path = os.path.abspath("tests/")
     expected_filename = os.path.join(base_path, f"{filename}.beancount")
+    if not os.path.exists(expected_filename):
+        raise ValueError(f"Missing expected file: {expected_filename}")
 
     document = os.path.join(base_path, filename)
     existing_entries_filename = document + ".beancount"
-    existing_entries = loader.load_file(
-        os.path.join(base_path, existing_entries_filename)
-    )[0]
+    existing_entries_path = os.path.join(base_path, existing_entries_filename)
+    existing_entries = loader.load_file(existing_entries_path)[0]
 
     account = importer.account(document)
     date = importer.date(document)
@@ -57,7 +59,7 @@ def run_importer_test_with_existing_entries(importer, filename):
 
     if diff:
         for line in diff:
-            print(line)
+            print(line.strip())
 
     assert not diff
 
@@ -89,3 +91,8 @@ def test_cash_balances():
     """Cash balances"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "cash-balances.xml")
+
+def test_simple_div():
+    """Simple dividend"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "simple-div.xml")
