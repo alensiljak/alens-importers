@@ -2,11 +2,10 @@
 The main import script.
 """
 
-from beancount.core import data  # type: ignore
 import beangulp  # type: ignore
-
-from uabean.importers import ibkr
+from beancount.core import data  # type: ignore
 from uabean.hooks import detect_transfers
+from uabean.importers import ibkr
 
 from importers import ibflex
 

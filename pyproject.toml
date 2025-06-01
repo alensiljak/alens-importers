@@ -12,3 +12,10 @@ dependencies = [
     "requests>=2.32.3",
     "uabean @ git+https://github.com/osadovy/uabean/@master",
 ]
+
+#[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    "isort",
+    "ruff",
+]

@@ -2,21 +2,14 @@
 Creating IBKR importer from scratch.
 """
 
-from collections import defaultdict
-from datetime import date
 import re
-import beangulp.importers
-import beangulp.importers.mixins
-import beangulp.importers.mixins.identifier
-from loguru import logger
+from datetime import date
 
 import beangulp  # type: ignore
-import beangulp.importer  # type: ignore
 from beancount.core import data
-# from beancount.core.data import Entries
 from beangulp import cache
-
-# from ibflex import Types, parser
+from beangulp.importers.mixins.identifier import identify
+from loguru import logger
 
 
 class Importer(beangulp.Importer):
@@ -35,15 +28,12 @@ class Importer(beangulp.Importer):
 
     def identify(self, filepath: str) -> bool:
         """Indicates whether the importer can handle the given file"""
-        import collections
-        from beangulp.importers.mixins.identifier import _PARTS, identify
-
         logger.debug(f"Identifying {filepath}")
 
-        # File is xml
-        # The main XML tag is FlexQueryResponse
         matchers = {
+            # File is xml
             "mime": [re.compile(r"text/xml")],
+            # The main XML tag is FlexQueryResponse
             "content": [re.compile(r"<FlexQueryResponse ")],
         }
 

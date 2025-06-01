@@ -8,29 +8,25 @@ Setup:
 4) run 'bean-extract config.py ibkr.yml -f mainLedgerFile.bean
 """
 
-import pandas as pd
-from datetime import datetime, timedelta
-import xml.etree.ElementTree as ET
-import warnings
+import logging
 import pickle
 import re
-import numpy as np
-import logging
-
-import yaml
+import warnings
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
 from os import path
-from ibflex import client, parser, Types
-from ibflex.enums import CashAction, BuySell
-from ibflex.client import ResponseCodeError
 
-from beancount.query import query
-from beancount.parser import options
+import numpy as np
+import pandas as pd
+import yaml
+from beancount.core import amount, data, position
+from beancount.core.number import MISSING, D, Decimal
 from beancount.ingest import importer
-from beancount.core import data, amount
-from beancount.core.number import D
-from beancount.core.number import Decimal
-from beancount.core import position
-from beancount.core.number import MISSING
+from beancount.parser import options
+from beancount.query import query
+from ibflex import Types, client, parser
+from ibflex.client import ResponseCodeError
+from ibflex.enums import BuySell, CashAction
 
 
 class IBKRImporter(importer.ImporterProtocol):

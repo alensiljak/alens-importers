@@ -10,7 +10,6 @@ from beancount.core import amount, data
 from beancount.core.number import D
 from ibflex import Types, client, parser
 from ibflex.enums import CashAction
-
 from tariochbctools.importers.general.priceLookup import PriceLookup
 
 

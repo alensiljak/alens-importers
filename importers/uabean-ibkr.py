@@ -20,20 +20,18 @@ It takes FlexQuery xml as input. The report should include all fields for these 
 The XML can be downloaded from interactive brokers manually or via an API.
 """
 
-from decimal import Decimal
 import functools
 import re
 import warnings
 from collections import defaultdict
 from datetime import timedelta
+from decimal import Decimal
 
 import beangulp
 from beancount.core import amount, data, flags, position, realization
-
 # from beancount.core.number import Decimal
 from ibflex import Types, parser
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
-
 from mixins import IdentifyMixin
 
 
