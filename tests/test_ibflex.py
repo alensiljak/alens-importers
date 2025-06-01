@@ -12,12 +12,16 @@ from beangulp.testing import _run, compare_expected
 from importers import ibflex
 
 
+fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"]]
+
 ibflex_config = {
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
+    "stock_account": "Assets:Investments:IB:Stocks:{symbol}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "dividend_payee": "{symbol} distribution",
     "interest_account": "Income:Investments:IB:{symbol}:Interest",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
+    "symbols": fund_codes,
 }
 
 Context = namedtuple("Context", ["importers"])
@@ -92,12 +96,20 @@ def test_cash_balances():
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "cash-balances.xml")
 
+
 def test_simple_div():
     """Simple dividend"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "simple-div.xml")
 
+
 def test_simple_whtax():
     """Simple withholding tax"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "simple-whtax.xml")
+
+
+def test_stock_balances():
+    """Stock balances"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "stock-balances.xml")

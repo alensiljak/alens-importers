@@ -5,7 +5,7 @@ Creating IBKR importer from scratch.
 from collections import defaultdict
 import os
 import re
-from datetime import date, timedelta
+import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -24,6 +24,7 @@ class AccountTypes(str, Enum):
     """Account types in the configuration file"""
 
     CASH = "cash_account"
+    STOCK = "stock_account"
     DIVIDEND = "dividend_account"
     INTEREST = "interest_account"
     WHTAX = "whtax_account"
@@ -37,6 +38,9 @@ class Importer(beangulp.Importer):
 
         # get config, the first argument.
         self.config = args[0]
+
+        # create symbol dictionaries.
+        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries()
 
         super().__init__(**kwargs)
 
@@ -92,10 +96,13 @@ class Importer(beangulp.Importer):
 
         transactions = (
             #     self.Trades(statement.Trades) +
-            self.cash_transactions(statement.CashTransactions) +
+            self.cash_transactions(statement.CashTransactions)
+            +
             #     + self.Balances(statement.CashReport)
-            self.balances(statement.CashReport)
+            self.cash_balances(statement.CashReport)
+            +
             #     + self.corporate_actions(statement.CorporateActions)
+            self.stock_balances(statement.OpenPositions, statement.CashReport)
         )
 
         transactions = self.merge_dividend_and_withholding(transactions)
@@ -103,6 +110,20 @@ class Importer(beangulp.Importer):
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
 
         return transactions
+
+    def create_symbol_dictionaries(self):
+        """Create symbol dictionaries, to fetch Symbols/ISINs"""
+        array = self.config.get("symbols")
+
+        symbol_to_isin = {}
+        isin_to_symbol = {}
+
+        # 2. Populate the dictionaries from your list
+        for symbol, isin in array:
+            symbol_to_isin[symbol] = isin
+            isin_to_symbol[isin] = symbol
+
+        return symbol_to_isin, isin_to_symbol
 
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
@@ -258,7 +279,7 @@ class Importer(beangulp.Importer):
                 )
         return entries
 
-    def date(self, filepath: str) -> date | None:
+    def date(self, filepath: str) -> datetime.date | None:
         """Archival date of the file"""
         logger.debug(f"Getting date for {filepath}")
 
@@ -267,7 +288,7 @@ class Importer(beangulp.Importer):
 
         return statements.FlexStatements[0].whenGenerated
 
-    def balances(self, cr):
+    def cash_balances(self, cr):
         """Account balance assertions"""
         transactions = []
         for row in cr:
@@ -278,7 +299,7 @@ class Importer(beangulp.Importer):
             transactions.append(
                 data.Balance(
                     data.new_metadata("balance", 0),
-                    row.toDate + timedelta(days=1),
+                    row.toDate + datetime.timedelta(days=1),
                     self.get_account_name(AccountTypes.CASH, currency=row.currency),
                     amount_,
                     None,
@@ -286,6 +307,172 @@ class Importer(beangulp.Importer):
                 )
             )
         return transactions
+
+    def stock_balances(self, rows, cash_report):
+        """Stock balance assertions"""
+        assert cash_report
+
+        txns = []
+        date = self.get_balance_assertion_date(cash_report)
+        # Balance is as of the next day
+        date = date + datetime.timedelta(days=1)
+
+        for row in rows:
+            account = self.get_account_name(AccountTypes.STOCK, row.symbol)
+            # isin = row.isin
+
+            # Get the symbol from Beancount by ISIN
+            # row.symbol
+            symbol = self.isin_to_symbol[row.isin]
+
+            txns.append(
+                data.Balance(
+                    data.new_metadata("balance", 0),
+                    date,
+                    account,
+                    amount.Amount(row.position, symbol),
+                    None,
+                    None,
+                )
+            )
+
+        return txns
+
+    # def stock_trades(self, trades):
+    #     """Generates transactions for IB stock trades.
+    #     Tries to keep track of available holdings to disambiguate sales when lots are not enough,
+    #     e.g. when there were multiple buys of the same symbol on the specific date.
+    #     Currently, it does not take into account comission when calculating cost for stocks,
+    #     just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, which might be utilized in the future.
+    #     It is mostly because I find the raw unafected price nicer to see in my beancount file.
+    #     It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
+    #     """
+    #     transactions = []
+    #     for row, lots in iter_trades_with_lots(trades):
+    #         if row.buySell in (BuySell.SELL, BuySell.CANCELSELL):
+    #             op = "SELL"
+    #         elif row.buySell in (BuySell.BUY, BuySell.CANCELBUY):
+    #             op = "BUY"
+    #         else:
+    #             raise RuntimeError(f"Unknown buySell value: {row.buySell}")
+    #         currency = row.currency
+    #         assert isinstance(currency, str)
+
+    #         currency_IBcommision = row.ibCommissionCurrency
+    #         assert isinstance(currency_IBcommision, str)
+
+    #         symbol = row.symbol
+    #         assert isinstance(row.netCash, Decimal)
+    #         net_cash = amount.Amount(row.netCash, currency)
+
+    #         assert isinstance(row.ibCommission, Decimal)
+    #         commission = amount.Amount(row.ibCommission, currency_IBcommision)
+
+    #         assert isinstance(row.quantity, Decimal)
+    #         quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
+    #         assert isinstance(row.tradePrice, Decimal)
+    #         price = amount.Amount(row.tradePrice, currency)
+    #         assert isinstance(row.tradeDate, datetime.date)
+    #         date = row.dateTime.date()
+
+    #         if row.openCloseIndicator == OpenClose.OPEN:
+    #             self.add_holding(row)
+    #             cost = position.CostSpec(
+    #                 number_per=price.number,
+    #                 number_total=None,
+    #                 currency=currency,
+    #                 date=row.tradeDate,
+    #                 label=None,
+    #                 merge=False,
+    #             )
+    #             lotpostings = [
+    #                 data.Posting(
+    #                     self.get_asset_account(symbol),
+    #                     quantity,
+    #                     cost,
+    #                     price,
+    #                     None,
+    #                     {"ib_cost": row.cost},
+    #                 ),
+    #             ]
+    #         else:
+    #             lotpostings = []
+    #             for clo in lots:
+    #                 try:
+    #                     clo_price = self.get_and_reduce_holding(clo)
+    #                 except ValueError as e:
+    #                     warnings.warn(str(e))
+    #                     clo_price = None
+    #                 cost = position.CostSpec(
+    #                     clo_price,
+    #                     number_total=None,
+    #                     currency=clo.currency,
+    #                     date=clo.openDateTime.date(),
+    #                     label=None,
+    #                     merge=False,
+    #                 )
+
+    #                 lotpostings.append(
+    #                     data.Posting(
+    #                         self.get_asset_account(symbol),
+    #                         amount.Amount(
+    #                             -clo.quantity, get_currency_from_symbol(clo.symbol)
+    #                         ),
+    #                         cost,
+    #                         price,
+    #                         None,
+    #                         {"ib_cost": clo.cost},
+    #                     )
+    #                 )
+
+    #             lotpostings.append(
+    #                 data.Posting(
+    #                     self.get_pnl_account(symbol), None, None, None, None, None
+    #                 )
+    #             )
+    #         postings = (
+    #             [
+    #                 data.Posting(
+    #                     self.get_account_name(AccountTypes.CASH, currency=currency),
+    #                     net_cash,
+    #                     None,
+    #                     None,
+    #                     None,
+    #                     None,
+    #                 )
+    #             ]
+    #             + lotpostings
+    #             + [
+    #                 data.Posting(
+    #                     self.get_fees_account(currency_IBcommision),
+    #                     minus(commission),
+    #                     None,
+    #                     None,
+    #                     "C",
+    #                     None,
+    #                 )
+    #             ]
+    #         )
+
+    #         transactions.append(
+    #             data.Transaction(
+    #                 data.new_metadata("trade", 0),
+    #                 date,
+    #                 flags.FLAG_OKAY,
+    #                 symbol,  # payee
+    #                 " ".join([op, quantity.to_string(), "@", price.to_string()]),
+    #                 data.EMPTY_SET,
+    #                 data.EMPTY_SET,
+    #                 postings,
+    #             )
+    #         )
+
+    #     return transactions
+
+    def get_balance_assertion_date(self, cash_report) -> datetime.date:
+        """Get the date to use for balance assertions."""
+        summary = cash_report[0]
+        return summary.toDate
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
@@ -340,3 +527,9 @@ def amount_add(a1, a2):
         raise ValueError(
             f"Cannot add amounts of differnent currencies: {a1.currency} and {a2.currency}"
         )
+
+
+def convert_date(self, d):
+    """Converts a date string to a datetime object."""
+    d = d.split(" ")[0]
+    return datetime.datetime.strptime(d, self.date_format)
