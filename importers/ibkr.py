@@ -6,11 +6,12 @@ from collections import defaultdict
 from datetime import date
 from loguru import logger
 
-import beangulp # type: ignore
-import beangulp.importer # type: ignore
+import beangulp  # type: ignore
+import beangulp.importer  # type: ignore
 from beancount.core import data
 from beancount.core.data import Entries
 from ibflex import Types, parser
+from lxml import etree
 
 
 class Importer(beangulp.Importer):
@@ -25,23 +26,25 @@ class Importer(beangulp.Importer):
     def name(self) -> str:
         logger.debug("Getting importer name")
 
-        return "IBKR importer"
+        return "AS IBKR importer (new)"
 
     def identify(self, filepath: str) -> bool:
         """Indicates whether the importer can handle the given file"""
         logger.debug(f"Identifying {filepath}")
 
         # File is xml
-        if filepath.endswith(".xml"):
-            return True
-        
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
+        if not filepath.endswith(".xml"):
+            return False
+
+        # with open(filepath, 'r', encoding='utf-8') as f:
+        #     content = f.read()
         # The main XML tag is FlexQueryResponse
+        tree = etree.parse(filepath, parser=etree.XMLParser(encoding="utf-8"))
+        root = tree.getroot()
+        if not root.tag == "FlexQueryResponse":
+            return False
 
-
-        raise NotImplementedError
-        # return True
+        return True
 
     def account(self, filepath: str) -> data.Account:
         """Return the account associated with the given file."""
@@ -84,11 +87,9 @@ class Importer(beangulp.Importer):
         logger.debug(f"Getting date for {filepath}")
 
         return super().date(filepath)
-        # raise NotImplementedError
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
         logger.debug(f"Deduplicating {len(entries)} entries")
 
         return super().deduplicate(entries, existing)
-        # raise NotImplementedError
