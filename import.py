@@ -5,7 +5,7 @@ The main import script.
 import beangulp  # type: ignore
 from beancount.core import data
 from uabean.hooks import detect_transfers
-from uabean.importers import ibkr
+# from uabean.importers import ibkr
 
 from importers import ibflex
 

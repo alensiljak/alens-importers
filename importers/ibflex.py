@@ -11,7 +11,8 @@ import beangulp  # type: ignore
 from beancount.core import amount, data, flags, position, realization
 from beangulp import cache
 from beangulp.importers.mixins.identifier import identify
-from ibflex import Types, parser
+import ibflex
+from ibflex import Types
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
 from loguru import logger
 
@@ -76,7 +77,7 @@ class Importer(beangulp.Importer):
         #     self.holdings_map = self.get_holdings_map(existing_entries)
         # else:
         #     self.holdings_map = defaultdict(list)
-        statements = parser.parse(open(filepath, "r", encoding="utf-8"))
+        statements = ibflex.parser.parse(open(filepath, "r", encoding="utf-8"))
         assert isinstance(statements, Types.FlexQueryResponse)
 
         statement = statements.FlexStatements[0]
@@ -207,7 +208,10 @@ class Importer(beangulp.Importer):
         """Archival date of the file"""
         logger.debug(f"Getting date for {filepath}")
 
-        return super().date(filepath)
+        # return super().date(filepath)
+        statements = ibflex.parser.parse(open(filepath, "r", encoding="utf-8"))
+
+        return statements.FlexStatements[0].whenGenerated
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
