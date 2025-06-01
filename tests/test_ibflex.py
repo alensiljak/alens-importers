@@ -13,7 +13,7 @@ from importers import ibflex
 
 
 ibflex_config = {
-    "cash_account": "Assets:Investments:IB:Cash",
+    "cash_account": "Assets:Investments:IB:Cash-{currency}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "interest_account": "Income:Investments:IB:{symbol}:Interest",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
