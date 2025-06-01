@@ -4,7 +4,7 @@ Creating IBKR importer from scratch.
 
 import os
 import re
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -93,6 +93,7 @@ class Importer(beangulp.Importer):
             #     self.Trades(statement.Trades) +
             self.cash_transactions(statement.CashTransactions)
             #     + self.Balances(statement.CashReport)
+            + self.balances(statement.CashReport)
             #     + self.corporate_actions(statement.CorporateActions)
         )
 
@@ -221,6 +222,26 @@ class Importer(beangulp.Importer):
         statements = ibflex.parser.parse(open(filepath, "r", encoding="utf-8"))
 
         return statements.FlexStatements[0].whenGenerated
+
+    def balances(self, cr):
+        """Account balance assertions"""
+        transactions = []
+        for row in cr:
+            if row.currency == "BASE_SUMMARY":
+                continue  # this is a summary balance that is not needed for beancount
+            amount_ = amount.Amount(row.endingCash, row.currency)
+
+            transactions.append(
+                data.Balance(
+                    data.new_metadata("balance", 0),
+                    row.toDate + timedelta(days=1),
+                    self.get_account_name(AccountTypes.CASH, currency=row.currency),
+                    amount_,
+                    None,
+                    None,
+                )
+            )
+        return transactions
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
