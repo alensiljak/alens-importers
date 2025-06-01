@@ -7,6 +7,6 @@
   Expenses:Tax:WithholdingTax:IB-EUR   0.08 USD
   Assets:Investments:IB-EUR:Cash-EUR
 
-2025-05-21 balance Assets:Investments:IB:Shares-USD:OPI             10 OPI
 2025-05-22 balance Assets:Investments:IB:Cash-AUD                  100 AUD
 2025-05-22 balance Assets:Investments:IB:Cash-EUR                  200 EUR
+2025-05-22 balance Assets:Investments:IB:Stocks:OPI                10 OPI

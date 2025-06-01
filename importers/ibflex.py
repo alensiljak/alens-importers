@@ -102,7 +102,7 @@ class Importer(beangulp.Importer):
             self.cash_balances(statement.CashReport)
             +
             #     + self.corporate_actions(statement.CorporateActions)
-            self.stock_balances(statement.OpenPositions, statement.CashReport)
+            self.stock_balances(statement.OpenPositions, statement)
         )
 
         transactions = self.merge_dividend_and_withholding(transactions)
@@ -220,7 +220,7 @@ class Importer(beangulp.Importer):
             meta,
         )
 
-        assert isinstance(row.reportDate, date)
+        assert isinstance(row.reportDate, datetime.date)
 
         # row.dateTime = the effective/book date.
         # row.reportDate = the date when the transaction happened and appeared in the report.
@@ -308,12 +308,16 @@ class Importer(beangulp.Importer):
             )
         return transactions
 
-    def stock_balances(self, rows, cash_report):
+    def stock_balances(self, rows, statement):
         """Stock balance assertions"""
-        assert cash_report
+        if not statement:
+            raise LookupError("No statement passed for the date")
+        assert isinstance(statement, Types.FlexStatement)
 
         txns = []
-        date = self.get_balance_assertion_date(cash_report)
+        # date = self.get_balance_assertion_date(cash_report)
+        date = self.get_statement_last_date(statement)
+
         # Balance is as of the next day
         date = date + datetime.timedelta(days=1)
 
@@ -473,6 +477,10 @@ class Importer(beangulp.Importer):
         """Get the date to use for balance assertions."""
         summary = cash_report[0]
         return summary.toDate
+
+    def get_statement_last_date(self, statement) -> datetime.date:
+        """Get the date to use for balance assertions."""
+        return statement.toDate
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
