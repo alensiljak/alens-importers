@@ -3,7 +3,7 @@ The main import script.
 """
 
 import beangulp  # type: ignore
-from beancount.core import data  # type: ignore
+from beancount.core import data
 from uabean.hooks import detect_transfers
 from uabean.importers import ibkr
 
@@ -27,7 +27,7 @@ importers = [
 ]
 
 
-def clean_up_descriptions(extracted_entries):
+def clean_up_descriptions(extracted_entries, existing_entries):
     """Example filter function; clean up cruft from narrations.
 
     Args:
@@ -63,16 +63,15 @@ def process_extracted_entries(extracted_entries_list, ledger_entries):
       (filename, entries), to be printed.
     """
     return [
-        (filename, clean_up_descriptions(entries), account, importer)
+        (filename, clean_up_descriptions(entries, ledger_entries), account, importer)
         for filename, entries, account, importer in extracted_entries_list
     ]
 
 
 # A list of hook functions to be applied during the import process.
 # These hooks are used by the beangulp importer to modify or process extracted entries
-# before final ingestion. In this case, the list contains a single hook function
-# that cleans up transaction descriptions and payee information.
-hooks = [detect_transfers]
+# before final ingestion.
+hooks = [clean_up_descriptions, process_extracted_entries, detect_transfers]
 
 
 if __name__ == "__main__":

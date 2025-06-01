@@ -25,6 +25,8 @@ uv pip install -e <path to beangulp>
 # Docs
 Following the examples at beangulp [repo](https://github.com/beancount/beangulp/tree/master/examples/).
 
+To configure the Flex report, see the [instructions](report-configuration.md).
+
 # References
 - Beangulp [repo](https://github.com/beancount/beangulp)
 - beancounttools, [repo](https://github.com/tarioch/beancounttools)
