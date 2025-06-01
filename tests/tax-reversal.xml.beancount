@@ -1,4 +1,6 @@
- ;; Account: ib-aus
+;; Account: ib-aus
+;; Date: 2025-05-22T20:41:57
+;; Name: tax-reversal.xml
 
 2024-11-15 * "Withholding Tax" "cash"
   Assets:Investments:IB:Cash               0.08 USD

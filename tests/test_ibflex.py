@@ -42,7 +42,7 @@ def run_importer_test_with_existing_entries(importer, filename):
     # base_path = os.path.abspath(f"tests/importers/{importer.account('')}")
     base_path = os.path.abspath("tests/")
     expected_filename = os.path.join(base_path, f"{filename}.beancount")
-    
+
     document = os.path.join(base_path, filename)
     existing_entries_filename = document + ".beancount"
     existing_entries = loader.load_file(
@@ -56,7 +56,8 @@ def run_importer_test_with_existing_entries(importer, filename):
     diff = compare_expected(expected_filename, account, date, name, entries)
 
     if diff:
-        print(diff)
+        for line in diff:
+            print(line)
 
     assert not diff
 
@@ -65,10 +66,12 @@ def test_run_importer():
     """Use the default run method"""
     run_importer_test(ibflex.Importer(ibflex_config), None)
 
+
 def test_div_tax():
     """Divident + tax"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "div-tax.xml")
+
 
 def test_tax_reversal():
     """WhTax reversal"""

@@ -23,9 +23,16 @@ uv pip install -e <path to beangulp>
 ```
 
 # Testing
+From terminal, the template is:
 ```sh
+uv run pytest
 uv run pytest <file_path>::<test_function_name>
 uv run pytest <file_path>::<TestClassName>::<test_method_name>
+```
+Individual tests:
+```sh
+uv run pytest tests\test_ibflex.py::test_tax_reversal
+uv run pytest tests\test_ibflex.py::test_cash_balances
 ```
 
 # Docs
