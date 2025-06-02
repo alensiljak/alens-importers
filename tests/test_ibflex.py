@@ -18,7 +18,8 @@ ibflex_config = {
     "stock_account": "Assets:Investments:IB:Stocks:{symbol}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "dividend_payee": "{symbol} distribution",
-    "interest_account": "Income:Investments:IB:{symbol}:Interest",
+    "interest_account": "Income:Investments:Interest:IB:{symbol}",
+    "broker_interest_account": "Income:Investments:Interest:IB:Cash",
     "fees_account": "Expenses:Commissions:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
     "symbols": fund_codes,
@@ -117,19 +118,68 @@ def test_stock_balances():
 
 def test_other_fees():
     """Other fees"""
-    pass
+    assert False
 
 
 def test_deposits_withdrawals():
     """Handle deposits and withdrawals"""
-    pass
+    assert False
 
 
 def test_broker_interest_recvd():
     """Handle broker interest received"""
-    assert False
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "brk-int-recvd.xml")
 
 
 def test_report_unknown_records():
     """Report unknown records to the console?"""
-    pass
+    assert False
+
+def test_corporate_actions():
+    """Handle corporate actions"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "corp-actions.xml")
+    assert False
+
+def test_stock_merger():
+    """Handle stock merger"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "stock-merger.xml")
+    assert False
+
+def test_stock_split():
+    """Handle stock split"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "stock-split.xml")
+    assert False
+
+def test_issue_change():
+    """Handle issue change"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "issue-change.xml")
+    assert False
+
+def test_forex():
+    """Handle forex"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "forex.xml")
+    assert False
+
+def test_stock_trades():
+    """Handle stock trades"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "stock-trades.xml")
+    assert False
+
+def test_deposits():
+    """Handle deposits"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "deposits.xml")
+    assert False
+
+def test_withdrawals():
+    """Handle withdrawals"""
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "withdrawals.xml")
+    assert False

@@ -27,6 +27,7 @@ class AccountTypes(str, Enum):
     STOCK = "stock_account"
     DIVIDEND = "dividend_account"
     INTEREST = "interest_account"
+    BRKINT = "broker_interest_account"
     FEES = "fees_account"
     WHTAX = "whtax_account"
 
@@ -146,9 +147,7 @@ class Importer(beangulp.Importer):
                 # transactions.append(self.deposit_from_row(index, row))
                 pass
             elif row.type in (CashAction.BROKERINTRCVD, CashAction.BROKERINTPAID):
-                # TODO : implement
-                # transactions.append(self.Interest_from_row(index, row))
-                pass
+                transactions.append(self.interest_from_row(index, row))
             elif row.type in (CashAction.FEES, CashAction.COMMADJ):
                 transactions.append(self.fee_from_row(index, row))
             elif row.type in (
@@ -410,6 +409,45 @@ class Importer(beangulp.Importer):
             row.reportDate,
             flags.FLAG_OKAY,
             payee,
+            narration,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
+
+    def interest_from_row(self, idx, row):
+        amount_ = amount.Amount(row.amount, row.currency)
+        # text = row.description
+        # month = re.findall(r"\w{3}-\d{4}", text)[0]
+        # narration = " ".join(["Interest ", row.currency, month])
+        narration = row.description
+
+        # make the postings, two for interest payments
+        # received and paid interests are booked on the same account
+        postings = [
+            data.Posting(
+                self.get_account_name(AccountTypes.BRKINT, currency=row.currency),
+                -amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+            data.Posting(
+                self.get_account_name(AccountTypes.CASH, currency=row.currency),
+                amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+        ]
+        meta = data.new_metadata("Interest", 0)
+        return data.Transaction(
+            meta,
+            row.reportDate,
+            flags.FLAG_OKAY,
+            "Interactive Brokers",  # payee
             narration,
             data.EMPTY_SET,
             data.EMPTY_SET,
