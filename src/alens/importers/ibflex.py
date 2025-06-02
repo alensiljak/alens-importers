@@ -174,6 +174,8 @@ class Importer(beangulp.Importer):
         amount_ = amount.Amount(row.amount, row.currency)
 
         text = row.description
+        text = self.groom_dividend_description(text)
+
         # Find ISIN in description in parentheses
         # isin = re.findall(r"\(([a-zA-Z]{2}[a-zA-Z0-9]{9}\d)\)", text)[0]
         isin = row.isin
@@ -238,6 +240,21 @@ class Importer(beangulp.Importer):
             data.EMPTY_SET,
             postings,
         )
+
+    def groom_dividend_description(self, text):
+        """
+        This function is used to remove the redundant info at the beginning of the description
+        """
+        assert isinstance(text, str)
+
+        # throw away the redundant info at the beginning
+        parts = text.split(" ")
+        # find the "DIVIDEND" part and take the remaining text.
+        div_location = parts.index("DIVIDEND")
+        remaining_parts = parts[div_location + 1 :]
+        # print(parts)
+        # print(remaining_parts)
+        return " ".join(remaining_parts)
 
     def cleanup_metadata_tags(self, transactions: list[data.Transaction]):
         """
