@@ -1,6 +1,5 @@
 """Test the ibflex importer"""
 
-# from common import run_importer_test_with_existing_entries
 import os
 from collections import namedtuple
 

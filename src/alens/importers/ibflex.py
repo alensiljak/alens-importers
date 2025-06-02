@@ -66,10 +66,8 @@ class Importer(beangulp.Importer):
 
     def account(self, filepath: str) -> data.Account:
         """Return the archiving account associated with the given file."""
-        logger.debug(f"Getting account for {filepath}")
-
-        # TODO : return the correct account
-        return "ib-aus"
+        # TODO : return the correct account?
+        return "ibkr"
 
     def filename(self, filepath: str) -> Optional[str]:
         """Returns the archival filename for the report"""
@@ -162,6 +160,12 @@ class Importer(beangulp.Importer):
                 )
             else:
                 raise RuntimeError(f"Unknown cash transaction type: {row.type}")
+        
+        # clean up the metadata tags
+        for t in transactions:
+            del t.meta["div_type"]
+            del t.meta["isin"]
+
         return transactions
 
     def dividends_and_withholding_tax_from_row(self, idx, row: Types.CashTransaction):
@@ -186,18 +190,23 @@ class Importer(beangulp.Importer):
         meta = {"isin": isin}
 
         account = ""
+        payee: str = ""
         type_ = None
+        
         if row.type == CashAction.WHTAX:
             account = self.get_account_name(
                 AccountTypes.WHTAX, row.symbol, row.currency
             )
             type_ = CashAction.DIVIDEND
+            # TODO: this can be extracted into a variable.
+            payee = "Tax Adjustment"
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             account = self.get_account_name(
                 AccountTypes.DIVIDEND, row.symbol, row.currency
             )
             type_ = row.type
             meta["div"] = True
+            payee = self.config.get("dividend_payee").replace("{symbol}", row.symbol),
 
         meta["div_type"] = type_.value
 
@@ -225,9 +234,11 @@ class Importer(beangulp.Importer):
 
         return data.Transaction(
             metadata,
+            # date
             row.reportDate,
             flags.FLAG_OKAY,
-            self.config.get("dividend_payee").replace("{symbol}", row.symbol),
+            # payee
+            payee,
             text,
             data.EMPTY_SET,
             data.EMPTY_SET,
