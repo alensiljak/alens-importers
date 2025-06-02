@@ -136,6 +136,16 @@ def test_report_unknown_records():
     """Report unknown records to the console?"""
     assert False
 
+def test_tax_adjustments():
+    """
+    Handle tax adjustments
+    This is normally the case when the tax is lowered, refunded, and a 
+    smaller amount is charged.
+    """
+    # importer = ibflex.Importer(ibflex_config)
+    # run_importer_test_with_existing_entries(importer, "tax-adjustments.xml")
+    assert False
+
 def test_corporate_actions():
     """Handle corporate actions"""
     # importer = ibflex.Importer(ibflex_config)
