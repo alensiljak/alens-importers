@@ -352,7 +352,12 @@ class Importer(beangulp.Importer):
 
             # Get the symbol from Beancount by ISIN
             # row.symbol
-            symbol = self.isin_to_symbol[row.isin]
+            try:
+                symbol = self.isin_to_symbol[row.isin]
+            except KeyError as e:
+                logger.error(f"Missing symbol entry for {row.isin}:")
+                logger.warning(f"['', '{row.isin}'],")
+                raise e
 
             txns.append(
                 data.Balance(
