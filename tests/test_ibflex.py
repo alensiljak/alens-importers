@@ -9,7 +9,7 @@ from beangulp import extract
 from beangulp.testing import _run, compare_expected
 
 # from uabean.importers.ibkr import get_test_importer
-from importers import ibflex
+from alens.importers import ibflex
 
 
 fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"]]
@@ -115,17 +115,21 @@ def test_stock_balances():
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "stock-balances.xml")
 
+
 def test_other_fees():
     """Other fees"""
     pass
+
 
 def test_deposits_withdrawals():
     """Handle deposits and withdrawals"""
     pass
 
+
 def test_broker_interest_recvd():
     """Handle broker interest received"""
     pass
+
 
 def test_report_unknown_records():
     """Report unknown records to the console?"""

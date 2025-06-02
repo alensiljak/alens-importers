@@ -1,7 +1,7 @@
 [project]
-name = "ib-flex-importer"
+name = "alens-importers"
 version = "0.1.0"
-description = "Add your description here"
+description = "Importers for Beancount's beangulp"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -16,6 +16,10 @@ dependencies = [
 #[project.optional-dependencies]
 [dependency-groups]
 dev = [
-    "isort",
-    "ruff",
+    "pytest>=8.3.5",
 ]
+
+[project.urls]
+repository = "https://github.com/alensiljak/alens-importers"
+
+[tool.ruff]

@@ -1,8 +1,10 @@
-# ib-flex-importer
+# alens-importers
 Tool for importing IB Flex report entries into Beancount journal
 
 Converting the functionality of interactive-brokers-flex-rs, ibflex, [repo](https://github.com/alensiljak/interactive-brokers-flex-rs) project to Python.
 Since Beancount provides an ingestion framework, beangulp, the tool should utilize that.
+
+Former ib-flex-importer.
 
 # Setup
 
@@ -40,8 +42,8 @@ Following the examples at beangulp [repo](https://github.com/beancount/beangulp/
 
 To configure the Flex report, see the [instructions](report-configuration.md).
 
-# References
+# Related Projects
 - Beangulp [repo](https://github.com/beancount/beangulp)
 - beancounttools, [repo](https://github.com/tarioch/beancounttools)
 - uabean, [repo](https://github.com/OSadovy/uabean/)
-- Red's Importers
+- Red's Importers, [repo](https://github.com/redstreet/beancount_reds_importers/)
