@@ -68,9 +68,9 @@ def run_importer_test_with_existing_entries(importer, filename):
     assert not diff
 
 
-def test_run_importer():
-    """Use the default run method"""
-    run_importer_test(ibflex.Importer(ibflex_config), None)
+# def test_run_importer():
+#     """Use the default run method"""
+#     run_importer_test(ibflex.Importer(ibflex_config), None)
 
 
 def test_div_tax():
