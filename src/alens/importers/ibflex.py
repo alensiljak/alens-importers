@@ -243,7 +243,7 @@ class Importer(beangulp.Importer):
         """
         This function is used to remove the tags that are no longer needed
         """
-        # clean up the metadata tags
+        # clean up the metadata tags on Transactions
         for t in transactions:
             if isinstance(t, data.Transaction):
                 if "div_type" in t.meta:
@@ -254,8 +254,8 @@ class Importer(beangulp.Importer):
                     del t.meta["div"]
                 if "descr" in t.meta:
                     del t.meta["descr"]
-            else:
-                print(f"Unknown transaction type: {type(t)}")
+            # else:
+            #     print(f"Unknown transaction type: {t}")
 
     def merge_dividend_and_withholding(self, entries):
         """This merges together transactions for earned dividends with the witholding tax ones,
