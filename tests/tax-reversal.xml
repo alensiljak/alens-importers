@@ -12,7 +12,7 @@
 </OpenPositions><NetStockPositionSummary>
 </NetStockPositionSummary><Trades>
 </Trades><CashTransactions>
-<CashTransaction currency="USD" symbol="OPI" isin="US67623C1099" dateTime="2024-11-15 12:20:00" amount="0.08" type="Withholding Tax" commodityType="" reportDate="2025-01-29" />
+<CashTransaction currency="USD" symbol="OPI" isin="US67623C1099" dateTime="2024-11-15 12:20:00" amount="0.08" type="Withholding Tax" commodityType="" reportDate="2025-01-29" description="OPI(US67623C1099) CASH DIVIDEND USD 0.01 PER SHARE - US TAX" />
 </CashTransactions><Transfers>
 </Transfers><OpenDividendAccruals>
 </OpenDividendAccruals>

@@ -25,7 +25,7 @@ Sections
 5.Amount
 6.Type
 7.CommodityType
-// add description
+8.Description
 
 ## Net Stock Position Summary
 1.Symbol

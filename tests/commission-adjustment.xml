@@ -12,7 +12,7 @@
 </OpenPositions><NetStockPositionSummary>
 </NetStockPositionSummary><Trades>
 </Trades><CashTransactions>
-<CashTransaction currency="USD" symbol="DES" isin="US97717W6049" dateTime="2025-05-08" amount="0.37013125" type="Commission Adjustments" commodityType="" reportDate="2025-05-08" />
+<CashTransaction currency="USD" symbol="DES" isin="US97717W6049" dateTime="2025-05-08" amount="0.37013125" type="Commission Adjustments" commodityType="" reportDate="2025-05-08" description="Refund (DES, 19, 2025-04-08)" />
 </CashTransactions><Transfers>
 </Transfers><OpenDividendAccruals>
 </OpenDividendAccruals>

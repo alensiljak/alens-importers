@@ -127,7 +127,7 @@ def test_deposits_withdrawals():
 
 def test_broker_interest_recvd():
     """Handle broker interest received"""
-    pass
+    assert False
 
 
 def test_report_unknown_records():

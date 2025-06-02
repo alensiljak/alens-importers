@@ -107,6 +107,7 @@ class Importer(beangulp.Importer):
         transactions = self.merge_dividend_and_withholding(transactions)
         # # self.adjust_closing_trade_cost_basis(transactions)
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
+        self.cleanup_metadata_tags(transactions)
 
         return transactions
 
@@ -160,11 +161,6 @@ class Importer(beangulp.Importer):
                 )
             else:
                 raise RuntimeError(f"Unknown cash transaction type: {row.type}")
-        
-        # clean up the metadata tags
-        for t in transactions:
-            del t.meta["div_type"]
-            del t.meta["isin"]
 
         return transactions
 
@@ -192,21 +188,18 @@ class Importer(beangulp.Importer):
         account = ""
         payee: str = ""
         type_ = None
-        
+
         if row.type == CashAction.WHTAX:
             account = self.get_account_name(
                 AccountTypes.WHTAX, row.symbol, row.currency
             )
             type_ = CashAction.DIVIDEND
-            # TODO: this can be extracted into a variable.
-            payee = "Tax Adjustment"
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             account = self.get_account_name(
                 AccountTypes.DIVIDEND, row.symbol, row.currency
             )
             type_ = row.type
             meta["div"] = True
-            payee = self.config.get("dividend_payee").replace("{symbol}", row.symbol),
 
         meta["div_type"] = type_.value
 
@@ -232,6 +225,8 @@ class Importer(beangulp.Importer):
         # row.dateTime = the effective/book date.
         # row.reportDate = the date when the transaction happened and appeared in the report.
 
+        payee = self.config.get("dividend_payee").replace("{symbol}", row.symbol)
+
         return data.Transaction(
             metadata,
             # date
@@ -245,6 +240,24 @@ class Importer(beangulp.Importer):
             postings,
         )
 
+    def cleanup_metadata_tags(self, transactions: list[data.Transaction]):
+        """
+        This function is used to remove the tags that are no longer needed
+        """
+        # clean up the metadata tags
+        for t in transactions:
+            if isinstance(t, data.Transaction):
+                if "div_type" in t.meta:
+                    del t.meta["div_type"]
+                if "isin" in t.meta:
+                    del t.meta["isin"]
+                if "div" in t.meta:
+                    del t.meta["div"]
+                if "descr" in t.meta:
+                    del t.meta["descr"]
+            else:
+                print(f"Unknown transaction type: {type(t)}")
+
     def merge_dividend_and_withholding(self, entries):
         """This merges together transactions for earned dividends with the witholding tax ones,
         as they can be on different lines in the cash transactions statement.
@@ -254,6 +267,7 @@ class Importer(beangulp.Importer):
             if not isinstance(e, data.Transaction):
                 continue
             if "div_type" in e.meta and "isin" in e.meta:
+                # Group by date, payee, div_type
                 grouped[(e.date, e.payee, e.meta["div_type"])].append(e)
         for group in grouped.values():
             if len(group) < 2:
@@ -269,9 +283,9 @@ class Importer(beangulp.Importer):
                     entries.remove(e)
 
             # clean-up meta tags
-            del d.meta["div_type"]
-            del d.meta["div"]
-            del d.meta["isin"]
+            # del d.meta["div_type"]
+            # del d.meta["div"]
+            # del d.meta["isin"]
 
             # merge postings with the same account
             grouped_postings = defaultdict(list)
@@ -358,13 +372,11 @@ class Importer(beangulp.Importer):
         """Converts fees to a beancount transaction"""
         amount_ = amount.Amount(row.amount, row.currency)
         text = row.description
-        # TODO: fix this. Add description field to the report.
-        narration = row.description
-        # try:
-        #     month = re.findall(r"\w{3} \d{4}", text)[0]
-        #     narration = " ".join(["Fee", row.currency, month])
-        # except IndexError:
-        #     narration = text
+        try:
+            month = re.findall(r"\w{3} \d{4}", text)[0]
+            narration = " ".join(["Fee", row.currency, month])
+        except IndexError:
+            narration = text
 
         # make the postings, two for fees
         postings = [
@@ -388,19 +400,21 @@ class Importer(beangulp.Importer):
                 None,
             ),
         ]
+
+        # This can be made configurable.
+        payee = "IB Commission Adjustment"
         meta = data.new_metadata(__file__, 0, {"descr": text})
+
         return data.Transaction(
             meta,
             row.reportDate,
             flags.FLAG_OKAY,
-            # TODO: check payee
-            "IB",  # payee
+            payee,
             narration,
             data.EMPTY_SET,
             data.EMPTY_SET,
             postings,
         )
-
 
     # def stock_trades(self, trades):
     #     """Generates transactions for IB stock trades.
