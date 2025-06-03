@@ -130,8 +130,14 @@ class Importer(beangulp.Importer):
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
         # Apply values to the template.
-        acct_type_string = acct_type.value.replace("{currency}", currency)
+        if currency is not None:
+            acct_type_string = acct_type.value.replace("{currency}", currency)
+        else:
+            acct_type_string = acct_type.value
+
         account_name = self.config.get(acct_type_string)
+        if account_name is None:
+            raise ValueError(f"Account name not found for '{acct_type_string}'")
         assert isinstance(account_name, str)
 
         # Populate template fields.
@@ -189,7 +195,7 @@ class Importer(beangulp.Importer):
             meta,
             row.reportDate,
             flags.FLAG_OKAY,
-            #"self",  # payee
+            # "self",  # payee
             "IB {currency} Deposit".replace("{currency}", row.currency),
             # row.description,
             None,
