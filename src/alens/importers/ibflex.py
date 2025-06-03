@@ -29,6 +29,7 @@ class AccountTypes(str, Enum):
     INTEREST = "interest_account"
     BRKINT = "broker_interest_account"
     FEES = "fees_account"
+    TXFER = "txfer-{currency}"
     WHTAX = "whtax_account"
 
 
@@ -128,7 +129,9 @@ class Importer(beangulp.Importer):
 
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
-        account_name = self.config.get(acct_type)
+        # Apply values to the template.
+        acct_type_string = acct_type.value.replace("{currency}", currency)
+        account_name = self.config.get(acct_type_string)
         assert isinstance(account_name, str)
 
         # Populate template fields.
@@ -143,9 +146,7 @@ class Importer(beangulp.Importer):
         transactions = []
         for index, row in enumerate(ct):
             if row.type == CashAction.DEPOSITWITHDRAW:
-                # TODO : implement
-                # transactions.append(self.deposit_from_row(index, row))
-                pass
+                transactions.append(self.deposit_from_row(index, row))
             elif row.type in (CashAction.BROKERINTRCVD, CashAction.BROKERINTPAID):
                 transactions.append(self.interest_from_row(index, row))
             elif row.type in (CashAction.FEES, CashAction.COMMADJ):
@@ -162,6 +163,40 @@ class Importer(beangulp.Importer):
                 raise RuntimeError(f"Unknown cash transaction type: {row.type}")
 
         return transactions
+
+    def deposit_from_row(self, idx, row):
+        amount_ = amount.Amount(row.amount, row.currency)
+        postings = [
+            data.Posting(
+                self.get_account_name(AccountTypes.CASH, currency=row.currency),
+                amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+            data.Posting(
+                self.get_account_name(AccountTypes.TXFER, currency=row.currency),
+                -amount_,
+                None,
+                None,
+                None,
+                None,
+            ),
+        ]
+        meta = data.new_metadata("deposit/withdrawal", 0)
+        return data.Transaction(
+            meta,
+            row.reportDate,
+            flags.FLAG_OKAY,
+            #"self",  # payee
+            "IB {currency} Deposit".replace("{currency}", row.currency),
+            # row.description,
+            None,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
 
     def dividends_and_withholding_tax_from_row(self, idx, row: Types.CashTransaction):
         """Converts dividends, payment inlieu of dividends and withholding tax to a

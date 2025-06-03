@@ -22,6 +22,8 @@ ibflex_config = {
     "broker_interest_account": "Income:Investments:Interest:IB:Cash",
     "fees_account": "Expenses:Commissions:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
+    "txfer-EUR": "Assets:Bank-Accounts:EUR",
+    "txfer-AUD": "Assets:Bank-Accounts:AUD",
     "symbols": fund_codes,
 }
 
@@ -123,7 +125,8 @@ def test_other_fees():
 
 def test_deposits_withdrawals():
     """Handle deposits and withdrawals"""
-    assert False
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "deposits-withdrawals.xml")
 
 
 def test_broker_interest_recvd():
@@ -180,16 +183,4 @@ def test_stock_trades():
     """Handle stock trades"""
     # importer = ibflex.Importer(ibflex_config)
     # run_importer_test_with_existing_entries(importer, "stock-trades.xml")
-    assert False
-
-def test_deposits():
-    """Handle deposits"""
-    # importer = ibflex.Importer(ibflex_config)
-    # run_importer_test_with_existing_entries(importer, "deposits.xml")
-    assert False
-
-def test_withdrawals():
-    """Handle withdrawals"""
-    # importer = ibflex.Importer(ibflex_config)
-    # run_importer_test_with_existing_entries(importer, "withdrawals.xml")
     assert False
