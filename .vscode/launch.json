@@ -1,24 +1,32 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug: Identify",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "import.py",
-            "console": "integratedTerminal",
-            "args": ["identify", "./downloads"]
-        },
-        {
-            "name": "Debug: Extract",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "import.py",
-            "console": "integratedTerminal",
-            "args": ["extract", "./downloads"]
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: Identify",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "import.py",
+      "console": "integratedTerminal",
+      "args": ["identify", "./downloads"]
+    },
+    {
+      "name": "Debug: Extract",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "import.py",
+      "console": "integratedTerminal",
+      "args": ["extract", "./downloads"]
+    },
+    {
+      "name": "Debug: Deduplication",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "import.py",
+      "console": "integratedTerminal",
+      "args": ["extract", "./tests/div-tax.xml", "-e", "./tests/div-tax.xml.beancount"]
+    },
+  ]
 }

@@ -75,7 +75,6 @@ def run_importer_test_with_existing_entries(importer, filename):
 #     """Use the default run method"""
 #     run_importer_test(ibflex.Importer(ibflex_config), None)
 
-
 def test_div_tax():
     """Divident + tax"""
     importer = ibflex.Importer(ibflex_config)

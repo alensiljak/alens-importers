@@ -10,7 +10,6 @@ dependencies = [
     "ibflex>=0.15",
     "loguru>=0.7.3",
     "requests>=2.32.3",
-    "uabean @ git+https://github.com/osadovy/uabean/@master",
 ]
 
 #[project.optional-dependencies]

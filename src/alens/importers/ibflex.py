@@ -282,11 +282,12 @@ class Importer(beangulp.Importer):
             postings,
         )
 
-    def groom_dividend_description(self, text):
+    def groom_dividend_description(self, text) -> str:
         """
         This function is used to remove the redundant info at the beginning of the description
         """
-        assert isinstance(text, str)
+        if not isinstance(text, str):
+            return text
 
         # throw away the redundant info at the beginning
         parts = text.split(" ")
