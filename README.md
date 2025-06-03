@@ -37,6 +37,10 @@ uv run pytest tests\test_ibflex.py::test_tax_reversal
 uv run pytest tests\test_ibflex.py::test_cash_balances
 ```
 
+# Publish
+
+The project cannot be published as it depends on the development version of the beangulp package, which is not published yet.
+
 # Docs
 Following the examples at beangulp [repo](https://github.com/beancount/beangulp/tree/master/examples/).
 
