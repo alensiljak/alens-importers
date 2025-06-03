@@ -17,7 +17,7 @@ ibflex_config = {
     "stock_account": "Assets:Investments:IB:Stocks:{symbol}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "dividend_payee": "{symbol} distribution",
-    "interest_account": "Income:Investments:Interest:IB:{symbol}",
+    # "interest_account": "Income:Investments:Interest:IB:{symbol}",
     "broker_interest_account": "Income:Investments:Interest:IB:Cash",
     "fees_account": "Expenses:Commissions:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",

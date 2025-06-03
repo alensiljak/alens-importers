@@ -26,7 +26,7 @@ class AccountTypes(str, Enum):
     CASH = "cash_account"
     STOCK = "stock_account"
     DIVIDEND = "dividend_account"
-    INTEREST = "interest_account"
+    # INTEREST = "interest_account"
     BRKINT = "broker_interest_account"
     FEES = "fees_account"
     TXFER = "txfer-{currency}"
