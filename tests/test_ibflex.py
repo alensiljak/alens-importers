@@ -141,8 +141,8 @@ def test_report_unknown_records():
 def test_tax_adjustments():
     """
     Handle tax adjustments
-    This is normally the case when the tax is lowered, refunded, and a 
-    smaller amount is charged.
+    This is normally the case when the tax is lowered. One amount is refunded
+    and another one is charged.
     """
     # importer = ibflex.Importer(ibflex_config)
     # run_importer_test_with_existing_entries(importer, "tax-adjustments.xml")
