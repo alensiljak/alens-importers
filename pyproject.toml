@@ -29,4 +29,8 @@ build-backend = "hatchling.build"
 # include = ["alens_importers"]
 packages = ["src/alens/"]
 
+# Used for a direct reference to beangulp. Remove after beangulp package is published.
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.ruff]
