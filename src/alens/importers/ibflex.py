@@ -246,7 +246,8 @@ class Importer(beangulp.Importer):
             # If this is a tax reversal, mark it as positive transaction.
             if row.amount > 0:
                 meta["div"] = True
-                tax_reversal_meta = data.new_metadata("tax_reversal", 0)
+                tax_reversal_meta = data.new_metadata("tax_reversal", 0, 
+                                                      {"date": row.dateTime.date()})
 
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             # Check if this is a dividend or interest income.
