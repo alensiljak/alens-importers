@@ -434,9 +434,6 @@ class Importer(beangulp.Importer):
         date = date + datetime.timedelta(days=1)
 
         for row in rows:
-            account = self.get_account_name(AccountTypes.STOCK, row.symbol)
-            # isin = row.isin
-
             # Get the symbol from Beancount by ISIN
             # row.symbol
             try:
@@ -445,6 +442,10 @@ class Importer(beangulp.Importer):
                 logger.error(f"Missing symbol entry for {row.isin}:")
                 logger.warning(f"['', '{row.isin}'],")
                 raise e
+
+            acct_symbol = format_symbol_for_account_name(symbol)
+            account = self.get_account_name(AccountTypes.STOCK, acct_symbol)
+            # isin = row.isin
 
             txns.append(
                 data.Balance(
