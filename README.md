@@ -8,7 +8,11 @@ Former ib-flex-importer.
 
 # Setup
 
-Install the latest beangulp (0.3.0) from the git repository directly:
+Install the ibflex package from the git repository directly:
+```sh
+uv pip install git+https://github.com/csingley/ibflex/
+```
+Eventually, also install the latest beangulp:
 ```sh
 uv pip install git+https://github.com/beancount/beangulp/
 ```
@@ -16,12 +20,8 @@ uv pip install git+https://github.com/beancount/beangulp/
 # Run
 ```sh
 uv run python import.py extract ./downloads > out/tmp.beancount
-```
-
-# Debugging
-Install the latest beangulp (0.3.0) from a git clone instead.
-```sh
-uv pip install -e <path to beangulp>
+# with deduplication
+uv run python import.py extract ./downloads -e existing.beancount > out/tmp.beancount
 ```
 
 # Testing

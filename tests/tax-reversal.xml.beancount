@@ -2,7 +2,7 @@
 ;; Date: 2025-05-22T20:41:57
 ;; Name: tax-reversal.xml
 
-2025-01-29 * "OPI distribution" "OPI(US67623C1099) CASH DIVIDEND USD 0.01 PER SHARE - US TAX"
+2025-01-29 * "OPI distribution" "USD 0.01 PER SHARE - US TAX"
   Expenses:Investments:IB:WithholdingTax  -0.08 USD
   Assets:Investments:IB:Cash-USD           0.08 USD
 

@@ -4,7 +4,7 @@ requires-python = ">=3.13"
 
 [[package]]
 name = "alens-importers"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "beancount" },
@@ -23,7 +23,7 @@ dev = [
 requires-dist = [
     { name = "beancount", specifier = ">=3.1.0" },
     { name = "beangulp", specifier = ">=0.2.0" },
-    { name = "ibflex", specifier = ">=0.15" },
+    { name = "ibflex", git = "https://github.com/csingley/ibflex" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "requests", specifier = ">=2.32.3" },
 ]
@@ -143,9 +143,8 @@ wheels = [
 
 [[package]]
 name = "ibflex"
-version = "0.15"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/32/e2/d15814fe915af8d8c6a03938d7d18279ecb2b32d2a6348160a1650d36078/ibflex-0.15.tar.gz", hash = "sha256:e1ab295ff8d615f1279287d6214752110c7faa9493fcffd7c5519e718d3004a7", size = 29979, upload-time = "2021-01-13T01:18:08.919Z" }
+version = "0.16"
+source = { git = "https://github.com/csingley/ibflex#df672d2b9048c524119149940c642ecee3593fa5" }
 
 [[package]]
 name = "idna"

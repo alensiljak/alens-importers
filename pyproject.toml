@@ -1,13 +1,13 @@
 [project]
 name = "alens-importers"
-version = "0.1.0"
+version = "0.1.1"
 description = "Importers for Beancount's beangulp"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "beancount>=3.1.0",
     "beangulp>=0.2.0",
-    "ibflex>=0.15",
+    "ibflex",
     "loguru>=0.7.3",
     "requests>=2.32.3",
 ]
@@ -34,3 +34,6 @@ packages = ["src/alens/"]
 allow-direct-references = true
 
 [tool.ruff]
+
+[tool.uv.sources]
+ibflex = { git = "https://github.com/csingley/ibflex" }

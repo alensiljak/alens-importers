@@ -170,6 +170,9 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# beancount cache
+*.picklecache
+
 # PyPI configuration file
 .pypirc
 
