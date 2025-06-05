@@ -11,8 +11,12 @@ from beangulp.testing import _run, compare_expected
 from alens.importers import ibflex
 
 
-fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"],
-              ["VGOV_F", "IE00B42WWV65"]]
+fund_codes = [
+    ["AMLP", "US00162Q4525"],
+    ["OPI", "US67623C1099"],
+    ["VAP.AX", "AU000000VAP7"],
+    ["VGOV_F", "IE00B42WWV65"],
+]
 
 interest_symbols = [
     "VGOV_F",
@@ -81,6 +85,7 @@ def run_importer_test_with_existing_entries(importer, filename):
 #     """Use the default run method"""
 #     run_importer_test(ibflex.Importer(ibflex_config), None)
 
+
 def test_div_tax():
     """Divident + tax"""
     importer = ibflex.Importer(ibflex_config)
@@ -110,10 +115,12 @@ def test_simple_div():
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "simple-div.xml")
 
+
 def test_div_interest():
     """Test interest distribution"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "div-interest.xml")
+
 
 def test_simple_whtax():
     """Simple withholding tax"""
@@ -143,7 +150,6 @@ def test_broker_interest_recvd():
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "brk-int-recvd.xml")
 
-
 def test_report_unknown_records():
     """Report unknown records to the console?"""
     assert False
@@ -154,9 +160,8 @@ def test_tax_adjustments():
     This is normally the case when the tax is lowered. One amount is refunded
     and another one is charged.
     """
-    # importer = ibflex.Importer(ibflex_config)
-    # run_importer_test_with_existing_entries(importer, "tax-adjustments.xml")
-    assert False
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "tax-adjustment.xml")
 
 def test_corporate_actions():
     """Handle corporate actions"""
@@ -187,6 +192,7 @@ def test_forex():
     # importer = ibflex.Importer(ibflex_config)
     # run_importer_test_with_existing_entries(importer, "forex.xml")
     assert False
+
 
 def test_stock_trades():
     """Handle stock trades"""

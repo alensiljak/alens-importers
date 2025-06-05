@@ -230,6 +230,8 @@ class Importer(beangulp.Importer):
         account = ""
         payee: str = ""
         type_ = None
+        tax_reversal_meta = None
+
         # Get the beancount symbol, for use in the book.
         b_symbol = self.isin_to_symbol.get(isin)
         assert isinstance(b_symbol, str)
@@ -240,6 +242,12 @@ class Importer(beangulp.Importer):
                 AccountTypes.WHTAX, row.symbol, row.currency
             )
             type_ = CashAction.DIVIDEND
+
+            # If this is a tax reversal, mark it as positive transaction.
+            if row.amount > 0:
+                meta["div"] = True
+                tax_reversal_meta = data.new_metadata("tax_reversal", 0)
+
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             # Check if this is a dividend or interest income.
             dist_accts = self.config.get("interest_symbols")
@@ -258,7 +266,7 @@ class Importer(beangulp.Importer):
         meta["div_type"] = type_.value if type_ else None
 
         postings = [
-            data.Posting(account, -amount_, None, None, None, None),
+            data.Posting(account, -amount_, None, None, None, tax_reversal_meta),
             data.Posting(
                 self.get_account_name(AccountTypes.CASH, row.symbol, row.currency),
                 amount_,
@@ -342,28 +350,33 @@ class Importer(beangulp.Importer):
         for group in grouped.values():
             if len(group) < 2:
                 continue
-            # merge
+            # merge postings into the div transaction
             try:
-                d = [e for e in group if "div" in e.meta][0]
+                div_tx = [e for e in group if "div" in e.meta][0]
             except IndexError:
                 continue
             for e in group:
-                if e != d:
-                    d.postings.extend(e.postings)
+                if e != div_tx:
+                    div_tx.postings.extend(e.postings)
                     entries.remove(e)
 
             # clean-up meta tags
-            # del d.meta["div_type"]
-            # del d.meta["div"]
-            # del d.meta["isin"]
+            # del div_tx.meta["div_type"]
+            # del div_tx.meta["div"]
+            # del div_tx.meta["isin"]
 
             # merge postings with the same account
             grouped_postings = defaultdict(list)
-            for p in d.postings:
-                grouped_postings[p.account].append(p)
-            d.postings.clear()
+            additional_postings = []
+            for p in div_tx.postings:
+                # don't group tax reversals
+                if p.meta and p.meta.get("filename") == "tax_reversal":
+                    additional_postings.append(p)
+                else:
+                    grouped_postings[p.account].append(p)
+            div_tx.postings.clear()
             for account, postings in grouped_postings.items():
-                d.postings.append(
+                div_tx.postings.append(
                     data.Posting(
                         account,
                         reduce(amount_add, (p.units for p in postings)),
@@ -373,6 +386,8 @@ class Importer(beangulp.Importer):
                         None,
                     )
                 )
+            # add the additional postings
+            div_tx.postings.extend(additional_postings)
         return entries
 
     def date(self, filepath: str) -> datetime.date | None:
