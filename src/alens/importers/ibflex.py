@@ -230,6 +230,10 @@ class Importer(beangulp.Importer):
         account = ""
         payee: str = ""
         type_ = None
+        # Get the beancount symbol, for use in the book.
+        b_symbol = self.isin_to_symbol.get(isin)
+        assert isinstance(b_symbol, str)
+        acc_symbol = format_symbol_for_account_name(b_symbol)
 
         if row.type == CashAction.WHTAX:
             account = self.get_account_name(
@@ -237,13 +241,19 @@ class Importer(beangulp.Importer):
             )
             type_ = CashAction.DIVIDEND
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
-            account = self.get_account_name(
-                AccountTypes.DIVIDEND, row.symbol, row.currency
-            )
+            # Check if this is a dividend or interest income.
+            dist_accts = self.config.get("distribution_accounts")
+            if b_symbol in dist_accts:
+                account = dist_accts[b_symbol]
+            else:
+                account = self.get_account_name(
+                    AccountTypes.DIVIDEND, acc_symbol, row.currency
+                )
+
             type_ = row.type
             meta["div"] = True
 
-        meta["div_type"] = type_.value
+        meta["div_type"] = type_.value if type_ else None
 
         postings = [
             data.Posting(account, -amount_, None, None, None, None),
@@ -267,7 +277,7 @@ class Importer(beangulp.Importer):
         # row.dateTime = the effective/book date.
         # row.reportDate = the date when the transaction happened and appeared in the report.
 
-        payee = self.config.get("dividend_payee").replace("{symbol}", row.symbol)
+        payee = self.config.get("dividend_payee").replace("{symbol}", b_symbol)
 
         return data.Transaction(
             metadata,
@@ -717,3 +727,13 @@ def convert_date(self, d):
     """Converts a date string to a datetime object."""
     d = d.split(" ")[0]
     return datetime.datetime.strptime(d, self.date_format)
+
+
+def format_symbol_for_account_name(symbol: str) -> str:
+    """Format a symbol for use in an account name."""
+    if "." in symbol:
+        symbol = symbol.replace(".", "-")
+    if "_" in symbol:
+        symbol = symbol.replace("_", "-")
+
+    return symbol

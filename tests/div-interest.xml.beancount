@@ -1,0 +1,7 @@
+;; Account: ibkr
+;; Date: 2025-05-22T20:41:57
+;; Name: div-interest.xml
+
+2025-02-26 * "VGOV_F distribution" "GBP 0.052018 PER SHARE (Mixed Income)"
+  Income:Investments:Interest:IB:VGOV-F  -11.24 GBP
+  Assets:Investments:IB:Cash-GBP          11.24 GBP

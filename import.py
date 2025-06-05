@@ -4,13 +4,17 @@ The main import script.
 
 import beangulp  # type: ignore
 from beancount.core import data
-#from uabean.hooks import detect_transfers
-# from uabean.importers import ibkr
 
 from alens.importers import ibflex
 
 
 fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"]]
+
+distribution_accounts = {
+    "OPI": "Income:Investments:Interest:IB:OPI",
+    "VGOV_F": "Income:Investments:Interest:IB:VGOV-F",
+    "VAP.AX": "Income:Investments:Interest:IB:VAP-AX",
+}
 
 ibflex_config = {
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
@@ -24,6 +28,7 @@ ibflex_config = {
     "txfer-EUR": "Assets:Bank-Accounts:EUR",
     "txfer-AUD": "Assets:Bank-Accounts:AUD",
     "symbols": fund_codes,
+    "distribution_accounts": distribution_accounts,
 }
 
 importers = [

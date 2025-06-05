@@ -11,7 +11,14 @@ from beangulp.testing import _run, compare_expected
 from alens.importers import ibflex
 
 
-fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"]]
+fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"],
+              ["VGOV_F", "IE00B42WWV65"]]
+
+distribution_accounts = {
+    "OPI": "Income:Investments:Interest:IB:OPI",
+    "VGOV_F": "Income:Investments:Interest:IB:VGOV-F",
+    "VAP.AX": "Income:Investments:Interest:IB:VAP-AX",
+}
 
 ibflex_config = {
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
@@ -25,6 +32,7 @@ ibflex_config = {
     "txfer-EUR": "Assets:Bank-Accounts:EUR",
     "txfer-AUD": "Assets:Bank-Accounts:AUD",
     "symbols": fund_codes,
+    "distribution_accounts": distribution_accounts,
 }
 
 Context = namedtuple("Context", ["importers"])
@@ -104,6 +112,10 @@ def test_simple_div():
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "simple-div.xml")
 
+def test_div_interest():
+    """Test interest distribution"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "div-interest.xml")
 
 def test_simple_whtax():
     """Simple withholding tax"""
