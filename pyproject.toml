@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "beancount>=3.1.0",
-    "beangulp @ git+https://github.com/beancount/beangulp/@master",
+    "beangulp>=0.2.0",
     "ibflex>=0.15",
     "loguru>=0.7.3",
     "requests>=2.32.3",
