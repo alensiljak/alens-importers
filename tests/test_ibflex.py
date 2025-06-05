@@ -14,25 +14,23 @@ from alens.importers import ibflex
 fund_codes = [["OPI", "US67623C1099"], ["VAP.AX", "AU000000VAP7"],
               ["VGOV_F", "IE00B42WWV65"]]
 
-distribution_accounts = {
-    "OPI": "Income:Investments:Interest:IB:OPI",
-    "VGOV_F": "Income:Investments:Interest:IB:VGOV-F",
-    "VAP.AX": "Income:Investments:Interest:IB:VAP-AX",
-}
+interest_symbols = [
+    "VGOV_F",
+]
 
 ibflex_config = {
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
     "stock_account": "Assets:Investments:IB:Stocks:{symbol}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
     "dividend_payee": "{symbol} distribution",
-    # "interest_account": "Income:Investments:Interest:IB:{symbol}",
+    "interest_account": "Income:Investments:Interest:IB:{symbol}",
     "broker_interest_account": "Income:Investments:Interest:IB:Cash",
     "fees_account": "Expenses:Commissions:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
     "txfer-EUR": "Assets:Bank-Accounts:EUR",
     "txfer-AUD": "Assets:Bank-Accounts:AUD",
     "symbols": fund_codes,
-    "distribution_accounts": distribution_accounts,
+    "interest_symbols": interest_symbols,
 }
 
 Context = namedtuple("Context", ["importers"])

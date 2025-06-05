@@ -26,7 +26,7 @@ class AccountTypes(str, Enum):
     CASH = "cash_account"
     STOCK = "stock_account"
     DIVIDEND = "dividend_account"
-    # INTEREST = "interest_account"
+    INTEREST = "interest_account"
     BRKINT = "broker_interest_account"
     FEES = "fees_account"
     TXFER = "txfer-{currency}"
@@ -242,9 +242,11 @@ class Importer(beangulp.Importer):
             type_ = CashAction.DIVIDEND
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             # Check if this is a dividend or interest income.
-            dist_accts = self.config.get("distribution_accounts")
+            dist_accts = self.config.get("interest_symbols")
             if dist_accts and b_symbol in dist_accts:
-                account = dist_accts[b_symbol]
+                account = self.get_account_name(
+                    AccountTypes.INTEREST, symbol=acc_symbol
+                )
             else:
                 account = self.get_account_name(
                     AccountTypes.DIVIDEND, acc_symbol, row.currency
