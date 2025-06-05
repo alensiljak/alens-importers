@@ -243,7 +243,7 @@ class Importer(beangulp.Importer):
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             # Check if this is a dividend or interest income.
             dist_accts = self.config.get("distribution_accounts")
-            if b_symbol in dist_accts:
+            if dist_accts and b_symbol in dist_accts:
                 account = dist_accts[b_symbol]
             else:
                 account = self.get_account_name(
