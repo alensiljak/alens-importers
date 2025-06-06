@@ -518,16 +518,16 @@ class Importer(beangulp.Importer):
         # received and paid interests are booked on the same account
         postings = [
             data.Posting(
-                self.get_account_name(AccountTypes.BRKINT, currency=row.currency),
-                -amount_,
+                self.get_account_name(AccountTypes.CASH, currency=row.currency),
+                amount_,
                 None,
                 None,
                 None,
                 None,
             ),
             data.Posting(
-                self.get_account_name(AccountTypes.CASH, currency=row.currency),
-                amount_,
+                self.get_account_name(AccountTypes.BRKINT, currency=row.currency),
+                -amount_,
                 None,
                 None,
                 None,
