@@ -268,7 +268,6 @@ class Importer(beangulp.Importer):
         meta["div_type"] = type_.value if type_ else None
 
         postings = [
-            data.Posting(account, -amount_, None, None, None, tax_reversal_meta),
             data.Posting(
                 self.get_account_name(AccountTypes.CASH, row.symbol, row.currency),
                 amount_,
@@ -277,6 +276,7 @@ class Importer(beangulp.Importer):
                 None,
                 None,
             ),
+            data.Posting(account, -amount_, None, None, None, tax_reversal_meta),
         ]
         metadata = data.new_metadata(
             "dividend",
