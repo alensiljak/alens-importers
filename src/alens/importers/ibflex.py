@@ -8,14 +8,14 @@ import re
 import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
+from typing import Optional, Tuple
 
 import beangulp  # type: ignore
 from beancount.core import amount, data, flags, position, realization
 from beangulp import cache
 from beangulp.importers.mixins.identifier import identify
 import ibflex
-from ibflex import Types
+from ibflex import TradeType, Types
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
 from loguru import logger
 
@@ -97,9 +97,10 @@ class Importer(beangulp.Importer):
         assert isinstance(statement, Types.FlexStatement)
 
         transactions = (
-            self.trades(statement.Trades) +
-            self.cash_transactions(statement.CashTransactions) +
-            self.cash_balances(statement.CashReport) +
+            self.trades(statement.Trades)
+            + self.cash_transactions(statement.CashTransactions)
+            + self.cash_balances(statement.CashReport)
+            +
             # TODO: corporate actions
             #     + self.corporate_actions(statement.CorporateActions)
             self.stock_balances(statement.OpenPositions, statement)
@@ -245,8 +246,9 @@ class Importer(beangulp.Importer):
             # If this is a tax reversal, mark it as positive transaction.
             if row.amount > 0:
                 meta["div"] = True
-                tax_reversal_meta = data.new_metadata("tax_reversal", 0, 
-                                                      {"date": row.dateTime.date()})
+                tax_reversal_meta = data.new_metadata(
+                    "tax_reversal", 0, {"date": row.dateTime.date()}
+                )
 
         elif row.type == CashAction.DIVIDEND or row.type == CashAction.PAYMENTINLIEU:
             # Check if this is a dividend or interest income.
@@ -333,8 +335,6 @@ class Importer(beangulp.Importer):
                     del t.meta["div"]
                 if "descr" in t.meta:
                     del t.meta["descr"]
-            # else:
-            #     print(f"Unknown transaction type: {t}")
 
     def merge_dividend_and_withholding(self, entries):
         """This merges together transactions for earned dividends with the witholding tax ones,
@@ -379,7 +379,7 @@ class Importer(beangulp.Importer):
                 div_tx.postings.append(
                     data.Posting(
                         account,
-                        reduce(amount_add, (p.units for p in postings)),
+                        reduce(amount_add, (p.units for p in postings)),  # type: ignore
                         None,
                         None,
                         None,
@@ -546,16 +546,18 @@ class Importer(beangulp.Importer):
             postings,
         )
 
-    def trades(self, tr):
+    def trades(self, trades: Tuple[Types.Trade, ...]) -> list[data.Transaction]:
         # forex transactions
-        fx = [t for t in tr if is_forex(t.symbol)]
+        fx = [t for t in trades if (not t.isin)
+                and t.transactionType == TradeType.EXCHTRADE
+                and is_forex_symbol(t.symbol)
+        ]
         # Stocks transactions
-        stocks = [t for t in tr if not is_forex(t.symbol)]
+        stocks = [t for t in trades if not is_forex_symbol(t.symbol)]
 
         # TODO: include stock trades later
         # return self.forex(fx) + self.stock_trades(stocks)
         return self.forex(fx)
-
 
     def forex(self, fx):
         transactions = []
@@ -595,18 +597,31 @@ class Importer(beangulp.Importer):
                 postings.append(
                     data.Posting(
                         # self.get_liquidity_account(currency_IBcommision),
-                        self.get_account_name(AccountTypes.CASH, symbol, currency_IBcommision),
+                        self.get_account_name(
+                            AccountTypes.CASH, symbol, currency_IBcommision
+                        ),
                         commission,
                         None,
                         None,
                         None,
                         None,
-                    ))
+                    )
+                )
+
+                try:
+                    offset = minus(commission)
+                except (ValueError, AssertionError):
+                    logger.error(
+                        f"Commission: {commission}, symbol: {symbol}, currency: {currency_IBcommision}"
+                    )
+                    offset = amount.Amount(Decimal(0), currency_IBcommision)
                 postings.append(
-                                    data.Posting(
+                    data.Posting(
                         # self.get_fees_account(currency_IBcommision),
-                        self.get_account_name(AccountTypes.FEES, symbol, currency_IBcommision),
-                        minus(commission),
+                        self.get_account_name(
+                            AccountTypes.FEES, symbol, currency_IBcommision
+                        ),
+                        offset,
                         None,
                         None,
                         None,
@@ -625,7 +640,7 @@ class Importer(beangulp.Importer):
                     flags.FLAG_OKAY,
                     # payee
                     payee,
-                    #" ".join([buysell, quantity.to_string(), "@", price.to_string()]),
+                    # " ".join([buysell, quantity.to_string(), "@", price.to_string()]),
                     None,
                     data.EMPTY_SET,
                     data.EMPTY_SET,
@@ -633,7 +648,6 @@ class Importer(beangulp.Importer):
                 )
             )
         return transactions
-
 
     def stock_trades(self, trades):
         """Generates transactions for IB stock trades.
@@ -645,6 +659,7 @@ class Importer(beangulp.Importer):
         It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
         """
         transactions = []
+
     #     for row, lots in iter_trades_with_lots(trades):
     #         if row.buySell in (BuySell.SELL, BuySell.CANCELSELL):
     #             op = "SELL"
@@ -766,17 +781,14 @@ class Importer(beangulp.Importer):
 
     #     return transactions
 
-
     def get_balance_assertion_date(self, cash_report) -> datetime.date:
         """Get the date to use for balance assertions."""
         summary = cash_report[0]
         return summary.toDate
 
-
     def get_statement_last_date(self, statement) -> datetime.date:
         """Get the date to use for balance assertions."""
         return statement.toDate
-
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
@@ -855,7 +867,9 @@ def get_forex_currencies(symbol):
     return [c[0], c[1]]
 
 
-def is_forex(symbol):
+def is_forex_symbol(symbol):
+    """Determines if a transaction is a forex transaction based on the symbol.
+    This, however, is wrong."""
     # returns True if a transaction is a forex transaction.
     b = re.search(r"(\w{3})[.](\w{3})", symbol)  # find something lile "USD.CHF"
     if b is None:  # no forex transaction, rather a normal stock transaction
@@ -864,6 +878,9 @@ def is_forex(symbol):
         return True
 
 
-def minus(A):
-    # a minus operator
-    return amount.Amount(-A.number, A.currency)
+def minus(amt: amount.Amount) -> amount.Amount:
+    """a minus operator"""
+    # assert isinstance(amt.number, Decimal)
+    assert amt.number is not None
+
+    return amount.Amount(-amt.number, amt.currency)
