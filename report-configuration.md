@@ -11,6 +11,10 @@ Sections
 2.Currency
 
 ## Cash Report
+
+Options:Currency Breakout
+
+Fields:
 1.Currency
 2.StartingCash
 3.EndingCash
@@ -18,6 +22,11 @@ Sections
 5.ToDate
 
 ## Cash Transactions
+
+Options:
+Dividends, Payment in Lieu of Dividends, Withholding Tax, 871(m) Withholding, Advisor Fees, Other Fees, Deposits & Withdrawals, Carbon Credits, Bill Pay, Broker Interest Paid, Broker Interest Received, Broker Fees, Bond Interest Paid, Bond Interest Received, Price Adjustments, Commission Adjustments,Detail
+
+Fields:
 1.Currency
 2.Symbol
 3.ISIN
@@ -26,6 +35,10 @@ Sections
 6.Type
 7.CommodityType
 8.Description
+
+## Corporate Actions
+
+Options: Detail
 
 ## Net Stock Position Summary
 1.Symbol
@@ -48,8 +61,10 @@ Options: Summary
 3.Quantity
 
 ## Trades
-Options: Execution
-- CurrencyPrimary
+Options: Execution, Closed Lots
+
+- Currency
+- Symbol
 - SecurityID
 - ISIN
 - DateTime
@@ -81,13 +96,12 @@ Options: Transfer
 
 
 ## General Configuration
-- Date Format yyyy-MM-dd
-// Time Format HH:mm:ss TimeZone
-- Use the time format `HH:mm:ss`
-- Date/Time Separator ' ' (single-space)
-- Profit and Loss Default
-- Include Canceled Trades? No
-- Include Currency Rates? No
-- Include Audit Trail Fields? No
-- Display Account Alias in Place of Account ID? No
-- Breakout by Day? No
+- Date Format `yyyy-MM-dd`
+- Time format `HH:mm:ss`; not `HH:mm:ss TimeZone`
+- Date/Time Separator ` ` (single-space)
+- Profit and Loss `Default`
+- Include Canceled Trades? `No`
+- Include Currency Rates? `No`
+- Include Audit Trail Fields? `No`
+- Display Account Alias in Place of Account ID? `No`
+- Breakout by Day? `No`

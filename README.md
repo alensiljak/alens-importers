@@ -19,7 +19,9 @@ uv pip install git+https://github.com/beancount/beangulp/
 
 # Configuration
 
-See the `test_ibflex.py` file for an example of configuration.
+To configure the IBKR Flex Query report, see the [instructions](report-configuration.md).
+
+The `test_ibflex.py` file contains a working example of importer configuration.
 
 # Run
 ```sh
@@ -46,9 +48,8 @@ uv run pytest tests\test_ibflex.py::test_cash_balances
 The project cannot be published as it depends on the development version of the beangulp package, which is not published yet.
 
 # Docs
-Following the examples at beangulp [repo](https://github.com/beancount/beangulp/tree/master/examples/).
 
-To configure the Flex report, see the [instructions](report-configuration.md).
+Following the examples at beangulp [repo](https://github.com/beancount/beangulp/tree/master/examples/).
 
 # Related Projects
 - Beangulp [repo](https://github.com/beancount/beangulp)

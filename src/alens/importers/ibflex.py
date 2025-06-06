@@ -85,6 +85,7 @@ class Importer(beangulp.Importer):
         """
         logger.debug(f"Extracting from {filepath}")
 
+        # TODO: check holdings
         # if False and self.use_existing_holdings and existing_entries is not None:
         #     self.holdings_map = self.get_holdings_map(existing_entries)
         # else:
@@ -96,12 +97,10 @@ class Importer(beangulp.Importer):
         assert isinstance(statement, Types.FlexStatement)
 
         transactions = (
-            #     self.Trades(statement.Trades) +
-            self.cash_transactions(statement.CashTransactions)
-            +
-            #     + self.Balances(statement.CashReport)
-            self.cash_balances(statement.CashReport)
-            +
+            self.trades(statement.Trades) +
+            self.cash_transactions(statement.CashTransactions) +
+            self.cash_balances(statement.CashReport) +
+            # TODO: corporate actions
             #     + self.corporate_actions(statement.CorporateActions)
             self.stock_balances(statement.OpenPositions, statement)
         )
@@ -547,16 +546,105 @@ class Importer(beangulp.Importer):
             postings,
         )
 
-    # def stock_trades(self, trades):
-    #     """Generates transactions for IB stock trades.
-    #     Tries to keep track of available holdings to disambiguate sales when lots are not enough,
-    #     e.g. when there were multiple buys of the same symbol on the specific date.
-    #     Currently, it does not take into account comission when calculating cost for stocks,
-    #     just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, which might be utilized in the future.
-    #     It is mostly because I find the raw unafected price nicer to see in my beancount file.
-    #     It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
-    #     """
-    #     transactions = []
+    def trades(self, tr):
+        # forex transactions
+        fx = [t for t in tr if is_forex(t.symbol)]
+        # Stocks transactions
+        stocks = [t for t in tr if not is_forex(t.symbol)]
+
+        # TODO: include stock trades later
+        # return self.forex(fx) + self.stock_trades(stocks)
+        return self.forex(fx)
+
+
+    def forex(self, fx):
+        transactions = []
+        for idx, row in enumerate(fx):
+            symbol = row.symbol
+            curr_prim, curr_sec = get_forex_currencies(symbol)
+            currency_IBcommision = row.ibCommissionCurrency
+            proceeds = amount.Amount(row.proceeds, curr_sec)
+            quantity = amount.Amount(row.quantity, curr_prim)
+            price = amount.Amount(row.tradePrice, curr_sec)
+            commission = amount.Amount(row.ibCommission, currency_IBcommision)
+            # buysell = row.buySell.name
+
+            postings = [
+                data.Posting(
+                    # self.get_liquidity_account(curr_prim),
+                    self.get_account_name(AccountTypes.CASH, symbol, curr_prim),
+                    quantity,
+                    None,
+                    price,
+                    None,
+                    None,
+                ),
+                data.Posting(
+                    # self.get_liquidity_account(curr_sec),
+                    self.get_account_name(AccountTypes.CASH, symbol, curr_sec),
+                    proceeds,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ]
+
+            # Add commission postings only if it is not zero
+            if commission.number != 0:
+                postings.append(
+                    data.Posting(
+                        # self.get_liquidity_account(currency_IBcommision),
+                        self.get_account_name(AccountTypes.CASH, symbol, currency_IBcommision),
+                        commission,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ))
+                postings.append(
+                                    data.Posting(
+                        # self.get_fees_account(currency_IBcommision),
+                        self.get_account_name(AccountTypes.FEES, symbol, currency_IBcommision),
+                        minus(commission),
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                )
+
+            # row.tradeDate
+            txn_date = row.reportDate
+            payee = f"FX {symbol}"
+
+            transactions.append(
+                data.Transaction(
+                    data.new_metadata("FX Transaction", idx),
+                    txn_date,
+                    flags.FLAG_OKAY,
+                    # payee
+                    payee,
+                    #" ".join([buysell, quantity.to_string(), "@", price.to_string()]),
+                    None,
+                    data.EMPTY_SET,
+                    data.EMPTY_SET,
+                    postings,
+                )
+            )
+        return transactions
+
+
+    def stock_trades(self, trades):
+        """Generates transactions for IB stock trades.
+        Tries to keep track of available holdings to disambiguate sales when lots are not enough,
+        e.g. when there were multiple buys of the same symbol on the specific date.
+        Currently, it does not take into account comission when calculating cost for stocks,
+        just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, which might be utilized in the future.
+        It is mostly because I find the raw unafected price nicer to see in my beancount file.
+        It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
+        """
+        transactions = []
     #     for row, lots in iter_trades_with_lots(trades):
     #         if row.buySell in (BuySell.SELL, BuySell.CANCELSELL):
     #             op = "SELL"
@@ -678,14 +766,17 @@ class Importer(beangulp.Importer):
 
     #     return transactions
 
+
     def get_balance_assertion_date(self, cash_report) -> datetime.date:
         """Get the date to use for balance assertions."""
         summary = cash_report[0]
         return summary.toDate
 
+
     def get_statement_last_date(self, statement) -> datetime.date:
         """Get the date to use for balance assertions."""
         return statement.toDate
+
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
@@ -756,3 +847,23 @@ def format_symbol_for_account_name(symbol: str) -> str:
         symbol = symbol.replace("_", "-")
 
     return symbol
+
+
+def get_forex_currencies(symbol):
+    b = re.search(r"(\w{3})[.](\w{3})", symbol)
+    c = b.groups()
+    return [c[0], c[1]]
+
+
+def is_forex(symbol):
+    # returns True if a transaction is a forex transaction.
+    b = re.search(r"(\w{3})[.](\w{3})", symbol)  # find something lile "USD.CHF"
+    if b is None:  # no forex transaction, rather a normal stock transaction
+        return False
+    else:
+        return True
+
+
+def minus(A):
+    # a minus operator
+    return amount.Amount(-A.number, A.currency)

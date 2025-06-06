@@ -1,6 +1,6 @@
 [project]
 name = "alens-importers"
-version = "0.4.2"
+version = "0.5.0"
 description = "Importers for Beancount's beangulp"
 readme = "README.md"
 requires-python = ">=3.13"

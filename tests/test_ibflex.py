@@ -189,9 +189,8 @@ def test_issue_change():
 
 def test_forex():
     """Handle forex"""
-    # importer = ibflex.Importer(ibflex_config)
-    # run_importer_test_with_existing_entries(importer, "forex.xml")
-    assert False
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "forex.xml")
 
 
 def test_stock_trades():
