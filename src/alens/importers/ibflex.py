@@ -43,7 +43,8 @@ class Importer(beangulp.Importer):
         self.config = args[0]
 
         # create symbol dictionaries.
-        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries()
+        symbols = self.config.get("symbols")
+        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries(symbols)
 
         super().__init__(**kwargs)
 
@@ -113,20 +114,21 @@ class Importer(beangulp.Importer):
 
         return transactions
 
-    def create_symbol_dictionaries(self):
-        """Create symbol dictionaries, to fetch Symbols/ISINs"""
-        array = self.config.get("symbols")
-
+    def create_symbol_dictionaries(self, symbols: list[Tuple[str, str]]) -> Tuple[dict, dict]:
+        """
+        Create symbol dictionaries, to fetch Symbols/ISINs
+        Reads array of tuples of (symbol, isin), or array of arrays.
+        """
         symbol_to_isin = {}
         isin_to_symbol = {}
 
         # 2. Populate the dictionaries from your list
-        for symbol, isin in array:
+        for symbol, isin in symbols:
             symbol_to_isin[symbol] = isin
             isin_to_symbol[isin] = symbol
 
-        return symbol_to_isin, isin_to_symbol
 
+        return symbol_to_isin, isin_to_symbol
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
         # Apply values to the template.

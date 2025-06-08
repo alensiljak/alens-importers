@@ -77,3 +77,13 @@ def test_tax_adjustments():
     """
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "tax-adjustment.xml")
+
+
+def test_read_tuple_symbors():
+    """Read symbols from a tuple array"""
+    symbols = [
+        ("AAPL", "US0378331005"),
+        ("MSFT", "US5949181045")
+    ]
+    importer = ibflex.Importer(ibflex_config)
+    importer.create_symbol_dictionaries(symbols)
