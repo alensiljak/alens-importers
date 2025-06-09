@@ -1,0 +1,17 @@
+<FlexQueryResponse queryName="bean-import" type="AF">
+<FlexStatements count="1">
+<FlexStatement accountId="A0001111" fromDate="2025-01-22" toDate="2025-05-21" period="LastNCalendarDays" whenGenerated="2025-05-22 20:41:57">
+<AccountInformation accountId="A0001111" currency="EUR" />
+<CashReport>
+</CashReport>
+<OpenPositions>
+</OpenPositions><NetStockPositionSummary>
+</NetStockPositionSummary><Trades>
+<Trade currency="USD" symbol="PFXF" securityID="US92189F4292" isin="US92189F4292" dateTime="2025-06-06 23:56:36" transactionType="ExchTrade" quantity="4" tradeDate="2025-06-09" tradePrice="16.935" tradeMoney="67.74" proceeds="-67.74" ibCommission="-0.35862125" ibCommissionCurrency="USD" netCash="-67.74" cost="67.74" fifoPnlRealized="0" buySell="BUY" reportDate="2025-06-06" />
+</Trades><CashTransactions>
+</CashTransactions><Transfers>
+</Transfers><OpenDividendAccruals>
+</OpenDividendAccruals>
+</FlexStatement>
+</FlexStatements>
+</FlexQueryResponse>

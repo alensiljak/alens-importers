@@ -42,6 +42,10 @@ class Importer(beangulp.Importer):
         # get config, the first argument.
         self.config = args[0]
 
+        self.holdings_map = defaultdict(list)
+        # TODO: Check the use of this
+        self.use_existing_holdings=True,
+
         # create symbol dictionaries.
         symbols = self.config.get("symbols")
         self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries(symbols)
@@ -86,11 +90,10 @@ class Importer(beangulp.Importer):
         """
         logger.debug(f"Extracting from {filepath}")
 
-        # TODO: check holdings
-        # if False and self.use_existing_holdings and existing_entries is not None:
-        #     self.holdings_map = self.get_holdings_map(existing_entries)
-        # else:
-        #     self.holdings_map = defaultdict(list)
+        if self.use_existing_holdings and existing is not None:
+            self.holdings_map = self.get_holdings_map(existing)
+        else:
+            self.holdings_map = defaultdict(list)
         statements = ibflex.parser.parse(open(filepath, "r", encoding="utf-8"))
         assert isinstance(statements, Types.FlexQueryResponse)
 
@@ -129,6 +132,7 @@ class Importer(beangulp.Importer):
 
 
         return symbol_to_isin, isin_to_symbol
+
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
         # Apply values to the template.
@@ -557,9 +561,7 @@ class Importer(beangulp.Importer):
         # Stocks transactions
         stocks = [t for t in trades if not is_forex_symbol(t.symbol)]
 
-        # TODO: include stock trades later
-        # return self.forex(fx) + self.stock_trades(stocks)
-        return self.forex(fx)
+        return self.forex(fx) + self.stock_trades(stocks)
 
     def forex(self, fx):
         transactions = []
@@ -662,127 +664,199 @@ class Importer(beangulp.Importer):
         """
         transactions = []
 
-    #     for row, lots in iter_trades_with_lots(trades):
-    #         if row.buySell in (BuySell.SELL, BuySell.CANCELSELL):
-    #             op = "SELL"
-    #         elif row.buySell in (BuySell.BUY, BuySell.CANCELBUY):
-    #             op = "BUY"
-    #         else:
-    #             raise RuntimeError(f"Unknown buySell value: {row.buySell}")
-    #         currency = row.currency
-    #         assert isinstance(currency, str)
+        for row, lots in iter_trades_with_lots(trades):
+            if row.buySell in (BuySell.SELL, BuySell.CANCELSELL):
+                op = "SELL"
+            elif row.buySell in (BuySell.BUY, BuySell.CANCELBUY):
+                op = "BUY"
+            else:
+                raise RuntimeError(f"Unknown buySell value: {row.buySell}")
+            currency = row.currency
+            assert isinstance(currency, str)
 
-    #         currency_IBcommision = row.ibCommissionCurrency
-    #         assert isinstance(currency_IBcommision, str)
+            currency_IBcommision = row.ibCommissionCurrency
+            assert isinstance(currency_IBcommision, str)
 
-    #         symbol = row.symbol
-    #         assert isinstance(row.netCash, Decimal)
-    #         net_cash = amount.Amount(row.netCash, currency)
+            symbol = row.symbol
+            assert isinstance(row.netCash, Decimal)
+            net_cash = amount.Amount(row.netCash, currency)
 
-    #         assert isinstance(row.ibCommission, Decimal)
-    #         commission = amount.Amount(row.ibCommission, currency_IBcommision)
+            assert isinstance(row.ibCommission, Decimal)
+            commission = amount.Amount(row.ibCommission, currency_IBcommision)
 
-    #         assert isinstance(row.quantity, Decimal)
-    #         quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
-    #         assert isinstance(row.tradePrice, Decimal)
-    #         price = amount.Amount(row.tradePrice, currency)
-    #         assert isinstance(row.tradeDate, datetime.date)
-    #         date = row.dateTime.date()
+            assert isinstance(row.quantity, Decimal)
+            quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
+            assert isinstance(row.tradePrice, Decimal)
+            price = amount.Amount(row.tradePrice, currency)
+            # assert isinstance(row.tradeDate, datetime.date)
+            assert isinstance(row.dateTime, datetime.date)
+            date = row.dateTime.date()
 
-    #         if row.openCloseIndicator == OpenClose.OPEN:
-    #             self.add_holding(row)
-    #             cost = position.CostSpec(
-    #                 number_per=price.number,
-    #                 number_total=None,
-    #                 currency=currency,
-    #                 date=row.tradeDate,
-    #                 label=None,
-    #                 merge=False,
-    #             )
-    #             lotpostings = [
-    #                 data.Posting(
-    #                     self.get_asset_account(symbol),
-    #                     quantity,
-    #                     cost,
-    #                     price,
-    #                     None,
-    #                     {"ib_cost": row.cost},
-    #                 ),
-    #             ]
-    #         else:
-    #             lotpostings = []
-    #             for clo in lots:
-    #                 try:
-    #                     clo_price = self.get_and_reduce_holding(clo)
-    #                 except ValueError as e:
-    #                     warnings.warn(str(e))
-    #                     clo_price = None
-    #                 cost = position.CostSpec(
-    #                     clo_price,
-    #                     number_total=None,
-    #                     currency=clo.currency,
-    #                     date=clo.openDateTime.date(),
-    #                     label=None,
-    #                     merge=False,
-    #                 )
+            if row.openCloseIndicator == OpenClose.OPEN:
+                self.add_holding(row)
+                cost = position.CostSpec(
+                    number_per=price.number,
+                    number_total=None,
+                    currency=currency,
+                    date=row.tradeDate,
+                    label=None,
+                    merge=False,
+                )
+                lotpostings = [
+                    data.Posting(
+                        self.get_asset_account(symbol),
+                        quantity,
+                        cost,
+                        price,
+                        None,
+                        {"ib_cost": row.cost},
+                    ),
+                ]
+            else:
+                lotpostings = []
+                for clo in lots:
+                    try:
+                        clo_price = self.get_and_reduce_holding(clo)
+                    except ValueError as e:
+                        warnings.warn(str(e))
+                        clo_price = None
+                    cost = position.CostSpec(
+                        clo_price,
+                        number_total=None,
+                        currency=clo.currency,
+                        date=clo.openDateTime.date(),
+                        label=None,
+                        merge=False,
+                    )
 
-    #                 lotpostings.append(
-    #                     data.Posting(
-    #                         self.get_asset_account(symbol),
-    #                         amount.Amount(
-    #                             -clo.quantity, get_currency_from_symbol(clo.symbol)
-    #                         ),
-    #                         cost,
-    #                         price,
-    #                         None,
-    #                         {"ib_cost": clo.cost},
-    #                     )
-    #                 )
+                    lotpostings.append(
+                        data.Posting(
+                            # self.get_asset_account(symbol),
+                            self.get_account_name(AccountTypes.STOCK, symbol=symbol),
+                            amount.Amount(
+                                -clo.quantity, get_currency_from_symbol(clo.symbol)
+                            ),
+                            cost,
+                            price,
+                            None,
+                            {"ib_cost": clo.cost},
+                        )
+                    )
 
-    #             lotpostings.append(
-    #                 data.Posting(
-    #                     self.get_pnl_account(symbol), None, None, None, None, None
-    #                 )
-    #             )
-    #         postings = (
-    #             [
-    #                 data.Posting(
-    #                     self.get_account_name(AccountTypes.CASH, currency=currency),
-    #                     net_cash,
-    #                     None,
-    #                     None,
-    #                     None,
-    #                     None,
-    #                 )
-    #             ]
-    #             + lotpostings
-    #             + [
-    #                 data.Posting(
-    #                     self.get_fees_account(currency_IBcommision),
-    #                     minus(commission),
-    #                     None,
-    #                     None,
-    #                     "C",
-    #                     None,
-    #                 )
-    #             ]
-    #         )
+                lotpostings.append(
+                    data.Posting(
+                        self.get_pnl_account(symbol), None, None, None, None, None
+                    )
+                )
+            postings = (
+                [
+                    data.Posting(
+                        self.get_account_name(AccountTypes.CASH, currency=currency),
+                        net_cash,
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                ]
+                + lotpostings
+                + [
+                    data.Posting(
+                        # self.get_fees_account(currency_IBcommision),
+                        self.get_account_name(AccountTypes.FEES, currency=currency_IBcommision),
+                        minus(commission),
+                        None,
+                        None,
+                        "C",
+                        None,
+                    )
+                ]
+            )
 
-    #         transactions.append(
-    #             data.Transaction(
-    #                 data.new_metadata("trade", 0),
-    #                 date,
-    #                 flags.FLAG_OKAY,
-    #                 symbol,  # payee
-    #                 " ".join([op, quantity.to_string(), "@", price.to_string()]),
-    #                 data.EMPTY_SET,
-    #                 data.EMPTY_SET,
-    #                 postings,
-    #             )
-    #         )
+            transactions.append(
+                data.Transaction(
+                    data.new_metadata("trade", 0),
+                    date,
+                    flags.FLAG_OKAY,
+                    symbol,  # payee
+                    " ".join([op, quantity.to_string(), "@", price.to_string()]),
+                    data.EMPTY_SET,
+                    data.EMPTY_SET,
+                    postings,
+                )
+            )
 
-    #     return transactions
+        return transactions
 
+    def get_holdings_map(self, entries):
+        root = realization.realize(entries)
+        assets_account = self.get_account_name(AccountTypes.STOCK)
+        account_parts = assets_account.split(":")
+        for part in account_parts:
+            if "{" in part:
+                break
+            if part not in root:
+                return defaultdict(list)
+            root = root[part]
+        result = defaultdict(list)
+        for account in realization.iter_children(root, leaf_only=True):
+            for pos in account.balance:
+                if pos.cost is None:
+                    continue
+                for tx in account.txn_postings:
+                    real_price = None
+                    if not isinstance(tx, data.TxnPosting):
+                        continue
+                    if (
+                        tx.posting.units.currency == pos.units.currency
+                        and tx.posting.cost.date == pos.cost.date
+                        and tx.posting.cost.number == pos.cost.number
+                        and "ib_cost" in tx.posting.meta
+                    ):
+                        real_price = abs(
+                            tx.posting.meta["ib_cost"] / tx.posting.units.number
+                        )
+                    if real_price is None:
+                        continue
+                    self._adjust_holding(
+                        result,
+                        pos.cost.date,
+                        pos.units.currency,
+                        tx.posting.units.number,
+                        tx.posting.cost.number,
+                        real_price,
+                    )
+        return result
+
+    def get_and_reduce_holding(self, lot):
+        holdings = self.holdings_map[
+            (lot.openDateTime.date(), get_currency_from_symbol(lot.symbol))
+        ]
+        for i, holding in enumerate(holdings):
+            quantity, price, real_price = holding
+            if not (
+                round(real_price, 4) == round(lot.cost / lot.quantity, 4)
+                or (
+                    quantity == lot.quantity
+                    and round(real_price, 2) == round(lot.cost / lot.quantity, 2)
+                )
+            ):
+                continue
+            if (quantity < 0 and quantity > lot.quantity) or (
+                quantity > 0 and quantity < lot.quantity
+            ):
+                raise ValueError(
+                    f"not enough holdings of {lot.symbol} at {lot.openDateTime.date()}: have {quantity}, want {lot.quantity}"
+                )
+            if quantity == lot.quantity:
+                holdings.pop(i)
+            else:
+                holding[0] -= lot.quantity
+            return price
+        raise ValueError(
+            f"do not have {lot.symbol} bought at {lot.openDateTime.date()}: want {lot.quantity} at {lot.cost} ({lot.cost / lot.quantity} per unit). have {holdings}"
+        )
+    
     def get_balance_assertion_date(self, cash_report) -> datetime.date:
         """Get the date to use for balance assertions."""
         summary = cash_report[0]
@@ -853,6 +927,13 @@ def convert_date(self, d):
     return datetime.datetime.strptime(d, self.date_format)
 
 
+def get_currency_from_symbol(symbol):
+    symbol = symbol.replace(" ", ".")
+    if len(symbol) < 2:
+        symbol = symbol + "STOCK"
+    return symbol
+
+
 def format_symbol_for_account_name(symbol: str) -> str:
     """Format a symbol for use in an account name."""
     if "." in symbol:
@@ -878,6 +959,29 @@ def is_forex_symbol(symbol):
         return False
     else:
         return True
+
+
+def iter_trades_with_lots(trades):
+    """Yields pairs of (trade, lots)."""
+    it = iter(trades)
+    trade = None
+    lots = []
+    while True:
+        try:
+            t = next(it)
+        except StopIteration:
+            break
+        if isinstance(t, Types.Trade):
+            if trade is not None:
+                yield trade, lots
+                lots = []
+            trade = t
+        elif isinstance(t, Types.Lot):
+            lots.append(t)
+        else:
+            raise ValueError(f"Unknown trade element: {t}")
+    if trade is not None:
+        yield trade, lots
 
 
 def minus(amt: amount.Amount) -> amount.Amount:

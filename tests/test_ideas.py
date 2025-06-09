@@ -9,13 +9,6 @@ def test_other_fees():
     assert False
 
 
-def test_stock_trades():
-    """Handle stock trades"""
-    # importer = ibflex.Importer(ibflex_config)
-    # run_importer_test_with_existing_entries(importer, "stock-trades.xml")
-    assert False
-
-
 def test_issue_change():
     """Handle issue change"""
     # importer = ibflex.Importer(ibflex_config)

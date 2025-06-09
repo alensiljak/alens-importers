@@ -79,7 +79,7 @@ def test_tax_adjustments():
     run_importer_test_with_existing_entries(importer, "tax-adjustment.xml")
 
 
-def test_read_tuple_symbors():
+def test_read_tuple_symbols():
     """Read symbols from a tuple array"""
     symbols = [
         ("AAPL", "US0378331005"),
@@ -87,3 +87,9 @@ def test_read_tuple_symbors():
     ]
     importer = ibflex.Importer(ibflex_config)
     importer.create_symbol_dictionaries(symbols)
+
+
+def test_stock_trades():
+    """Handle stock trades"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "stock-trades.xml")
