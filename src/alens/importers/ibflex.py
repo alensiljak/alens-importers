@@ -709,7 +709,7 @@ class Importer(beangulp.Importer):
 
             if row.openCloseIndicator == OpenClose.OPEN:
                 # Purchase
-                
+                action = "Buy"
                 self.add_holding(row)
                 cost = position.CostSpec(
                     number_per=price.number,
@@ -734,7 +734,7 @@ class Importer(beangulp.Importer):
                 ]
             else:
                 # Sale
-
+                action = "Sell"
                 lotpostings = []
                 for clo in lots:
                     try:
@@ -803,7 +803,7 @@ class Importer(beangulp.Importer):
                 ]
             )
 
-            payee = f"Buy {bc_symbol}"
+            payee = f"{action} {bc_symbol}"
             
             transactions.append(
                 data.Transaction(
