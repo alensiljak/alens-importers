@@ -810,7 +810,8 @@ class Importer(beangulp.Importer):
                     flags.FLAG_OKAY,
                     # symbol,  # payee
                     payee,
-                    " ".join([op, quantity.to_string(), "@", price.to_string()]),
+                    # " ".join([op, quantity.to_string(), "@", price.to_string()]),
+                    None,
                     data.EMPTY_SET,
                     data.EMPTY_SET,
                     postings,
