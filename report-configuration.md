@@ -83,7 +83,6 @@ Options: Execution, Closed Lots
 - CostBasis
 - Realized P/L
 - Buy/Sell
-- Orig Trade Date
 
 ## Transfers
 Options: Transfer
