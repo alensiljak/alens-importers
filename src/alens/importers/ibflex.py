@@ -925,6 +925,9 @@ class Importer(beangulp.Importer):
             elif row.type == Reorg.ISSUECHANGE:
                 assert len(action_group) == 2
                 transactions.append(self.process_issue_change(action_group))
+            elif row.type == Reorg.RIGHTSISSUE:
+                # Ignore?
+                logger.warning(f"ignoring rights issue: {row.dateTime}, {row.description}")
             else:
                 raise RuntimeError(f"unknown corporate action type: {row.type}")
         return transactions
