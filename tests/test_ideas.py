@@ -4,6 +4,11 @@ None of them pass as they are not implemented yet.
 """
 
 
+def test_stock_sale():
+    """Stock sale"""
+    assert False
+
+
 def test_other_fees():
     """Other fees"""
     assert False
