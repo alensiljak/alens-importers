@@ -689,7 +689,12 @@ class Importer(beangulp.Importer):
             net_cash = amount.Amount(row.netCash, currency)
 
             assert isinstance(row.ibCommission, Decimal)
-            commission = amount.Amount(row.ibCommission, currency_IBcommision)
+            # commission = amount.Amount(row.ibCommission, currency_IBcommision)
+            if row.taxes is not None:
+                assert isinstance(row.taxes, Decimal)
+                fees = amount.Amount(row.ibCommission + row.taxes, currency)
+            else:
+                fees = amount.Amount(row.ibCommission, currency_IBcommision)
 
             assert isinstance(row.quantity, Decimal)
             quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
@@ -717,7 +722,8 @@ class Importer(beangulp.Importer):
                         self.get_account_name(AccountTypes.STOCK, symbol=symbol),
                         quantity,
                         cost,
-                        price,
+                        # price,
+                        None,
                         None,
                         # {"ib_cost": row.cost},
                         None,
@@ -774,7 +780,7 @@ class Importer(beangulp.Importer):
                         self.get_account_name(
                             AccountTypes.FEES, currency=currency_IBcommision
                         ),
-                        minus(commission),
+                        minus(fees),
                         None,
                         None,
                         # "C",

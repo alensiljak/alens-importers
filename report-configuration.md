@@ -63,6 +63,7 @@ Options: Summary
 ## Trades
 Options: Execution, Closed Lots
 
+- ReportDate
 - Currency
 - Symbol
 - SecurityID
@@ -77,10 +78,12 @@ Options: Execution, Closed Lots
 - Proceeds
 - IBCommission
 - IBCommissionCurrency
+- Taxes
 - NetCash
 - CostBasis
 - Realized P/L
 - Buy/Sell
+- Orig Trade Date
 
 ## Transfers
 Options: Transfer
