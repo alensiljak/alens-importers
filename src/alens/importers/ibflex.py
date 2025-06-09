@@ -107,13 +107,12 @@ class Importer(beangulp.Importer):
             self.trades(statement.Trades)
             + self.cash_transactions(statement.CashTransactions)
             + self.cash_balances(statement.CashReport)
-            +
-            # TODO: corporate actions
-            #     + self.corporate_actions(statement.CorporateActions)
-            self.stock_balances(statement.OpenPositions, statement)
+            + self.corporate_actions(statement.CorporateActions)
+            + self.stock_balances(statement.OpenPositions, statement)
         )
 
         transactions = self.merge_dividend_and_withholding(transactions)
+        # TODO: check this
         # # self.adjust_closing_trade_cost_basis(transactions)
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
         self.cleanup_metadata_tags(transactions)
@@ -909,6 +908,194 @@ class Importer(beangulp.Importer):
     def get_statement_last_date(self, statement) -> datetime.date:
         """Get the date to use for balance assertions."""
         return statement.toDate
+
+    def corporate_actions(self, actions):
+        transactions = []
+        actions_map = defaultdict(list)
+        for row in actions:
+            actions_map[row.actionID].append(row)
+        for action_group in actions_map.values():
+            row = action_group[0]
+            if row.type == Reorg.FORWARDSPLIT:
+                assert len(action_group) == 1
+                transactions.append(self.process_stock_forwardsplit(row))
+            elif row.type == Reorg.MERGER:
+                assert len(action_group) == 2
+                transactions.append(self.process_stock_merger(action_group))
+            elif row.type == Reorg.ISSUECHANGE:
+                assert len(action_group) == 2
+                transactions.append(self.process_issue_change(action_group))
+            else:
+                raise RuntimeError(f"unknown corporate action type: {row.type}")
+        return transactions
+
+    def process_stock_forwardsplit(self, row):
+        symbol = get_currency_from_symbol(row.symbol)
+        m = re.search(r"SPLIT (\d+) FOR (\d+)", row.description)
+        factor = Decimal(int(m.group(1)) / int(m.group(2)))
+        holdings = [(k[0], v) for k, v in self.holdings_map.items() if k[1] == symbol]
+        postings = []
+        for date, lst in holdings:
+            for quantity, price, real_price in lst:
+                postings.append(
+                    data.Posting(
+                        # self.get_asset_account(row.symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=row.symbol),
+                        amount.Amount(-quantity, symbol),
+                        data.CostSpec(price, None, row.currency, date, None, False),
+                        None,
+                        None,
+                        None,
+                    )
+                )
+                postings.append(
+                    data.Posting(
+                        # self.get_asset_account(row.symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=row.symbol),
+                        amount.Amount(quantity * factor, symbol),
+                        data.CostSpec(
+                            price / factor, None, row.currency, date, None, False
+                        ),
+                        None,
+                        None,
+                        {"ib_cost": round(real_price / factor * quantity, 6)},
+                    )
+                )
+        for date, lst in holdings:
+            for i in lst:
+                i[0] *= Decimal(factor)
+                i[1] /= Decimal(factor)
+                i[2] /= Decimal(factor)
+        return data.Transaction(
+            data.new_metadata("corporateactions", 0),
+            row.reportDate,
+            flags.FLAG_OKAY,
+            row.symbol,
+            row.description,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
+
+    def process_stock_merger(self, action_group):
+        # This is almost certainly wrong for tax accounting
+        row = action_group[0]
+        symbol = get_currency_from_symbol(row.symbol)
+        holdings = [(k[0], v) for k, v in self.holdings_map.items() if k[1] == symbol]
+        postings = []
+        for date, lst in holdings:
+            for quantity, price, _real_price in lst:
+                postings.append(
+                    data.Posting(
+                        # self.get_asset_account(row.symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=row.symbol),
+                        amount.Amount(-quantity, symbol),
+                        data.CostSpec(price, None, row.currency, date, None, False),
+                        None,
+                        None,
+                        None,
+                    )
+                )
+        for k in list(self.holdings_map.keys()):
+            if k[1] == symbol:
+                del self.holdings_map[k]
+        postings.append(
+            data.Posting(
+                # self.get_liquidity_account(row.currency),
+                self.get_account_name(AccountTypes.CASH, currency=row.currency),
+                amount.Amount(row.proceeds, row.currency),
+                None,
+                None,
+                None,
+                None,
+            )
+        )
+        postings.append(
+            data.Posting(
+                # self.get_pnl_account(symbol),
+                self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol),
+                None, None, None, None, None)
+        )
+        row = action_group[1]
+        symbol = get_currency_from_symbol(row.symbol)
+        postings.append(
+            data.Posting(
+                # self.get_asset_account(row.symbol),
+                self.get_account_name(AccountTypes.STOCK, symbol=symbol),
+                amount.Amount(row.quantity, get_currency_from_symbol(row.symbol)),
+                data.CostSpec(
+                    row.value / row.quantity,
+                    None,
+                    row.currency,
+                    row.reportDate,
+                    None,
+                    None,
+                ),
+                None,
+                None,
+                None,
+            )
+        )
+        self.holdings_map[(row.reportDate, symbol)].append(
+            (row.quantity, row.value / row.quantity, row.value / row.quantity)
+        )
+        return data.Transaction(
+            data.new_metadata("corporateactions", 0),
+            row.reportDate,
+            flags.FLAG_OKAY,
+            row.symbol,
+            row.description,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
+
+    def process_issue_change(self, action_group):
+        row = action_group[0]
+        if row.symbol.endswith(".OLD"):
+            row = action_group[1]
+        old_symbol = re.search(r"(.*?)\(", row.description).group(1)
+        holdings = [
+            (k[0], v) for k, v in self.holdings_map.items() if k[1] == old_symbol
+        ]
+        postings = []
+        for date, lst in holdings:
+            for quantity, price, real_price in lst:
+                postings.append(
+                    data.Posting(
+                        # self.get_asset_account(old_symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=old_symbol),
+                        amount.Amount(-quantity, old_symbol),
+                        data.CostSpec(price, None, row.currency, date, None, False),
+                        None,
+                        None,
+                        None,
+                    )
+                )
+                postings.append(
+                    data.Posting(
+                        # self.get_asset_account(row.symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=row.symbol),
+                        amount.Amount(quantity, get_currency_from_symbol(row.symbol)),
+                        data.CostSpec(price, None, row.currency, date, None, False),
+                        None,
+                        None,
+                        {"ib_cost": quantity * real_price},
+                    )
+                )
+            del self.holdings_map[(date, old_symbol)]
+            self.holdings_map[(date, row.symbol)] = lst
+        return data.Transaction(
+            data.new_metadata("corporateactions", 0),
+            row.reportDate,
+            flags.FLAG_OKAY,
+            row.symbol,
+            row.description,
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            postings,
+        )
+
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
