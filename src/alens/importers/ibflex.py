@@ -27,6 +27,7 @@ class AccountTypes(str, Enum):
     STOCK = "stock_account"
     DIVIDEND = "dividend_account"
     INTEREST = "interest_account"
+    CAPGAIN = "capgain_account"
     BRKINT = "broker_interest_account"
     FEES = "fees_account"
     TXFER = "txfer-{currency}"
@@ -43,12 +44,14 @@ class Importer(beangulp.Importer):
         self.config = args[0]
 
         self.holdings_map = defaultdict(list)
-        # TODO: Check the use of this
-        self.use_existing_holdings=True,
+        # self.use_existing_holdings = True
+        self.use_existing_holdings = False
 
         # create symbol dictionaries.
         symbols = self.config.get("symbols")
-        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries(symbols)
+        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries(
+            symbols
+        )
 
         super().__init__(**kwargs)
 
@@ -117,7 +120,9 @@ class Importer(beangulp.Importer):
 
         return transactions
 
-    def create_symbol_dictionaries(self, symbols: list[Tuple[str, str]]) -> Tuple[dict, dict]:
+    def create_symbol_dictionaries(
+        self, symbols: list[Tuple[str, str]]
+    ) -> Tuple[dict, dict]:
         """
         Create symbol dictionaries, to fetch Symbols/ISINs
         Reads array of tuples of (symbol, isin), or array of arrays.
@@ -129,7 +134,6 @@ class Importer(beangulp.Importer):
         for symbol, isin in symbols:
             symbol_to_isin[symbol] = isin
             isin_to_symbol[isin] = symbol
-
 
         return symbol_to_isin, isin_to_symbol
 
@@ -554,9 +558,12 @@ class Importer(beangulp.Importer):
 
     def trades(self, trades: Tuple[Types.Trade, ...]) -> list[data.Transaction]:
         # forex transactions
-        fx = [t for t in trades if (not t.isin)
-                and t.transactionType == TradeType.EXCHTRADE
-                and is_forex_symbol(t.symbol)
+        fx = [
+            t
+            for t in trades
+            if (not t.isin)
+            and t.transactionType == TradeType.EXCHTRADE
+            and is_forex_symbol(t.symbol)
         ]
         # Stocks transactions
         stocks = [t for t in trades if not is_forex_symbol(t.symbol)]
@@ -658,7 +665,8 @@ class Importer(beangulp.Importer):
         Tries to keep track of available holdings to disambiguate sales when lots are not enough,
         e.g. when there were multiple buys of the same symbol on the specific date.
         Currently, it does not take into account comission when calculating cost for stocks,
-        just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, which might be utilized in the future.
+        just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, 
+        which might be utilized in the future.
         It is mostly because I find the raw unafected price nicer to see in my beancount file.
         It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
         """
@@ -693,6 +701,8 @@ class Importer(beangulp.Importer):
             date = row.dateTime.date()
 
             if row.openCloseIndicator == OpenClose.OPEN:
+                # Purchase
+                
                 self.add_holding(row)
                 cost = position.CostSpec(
                     number_per=price.number,
@@ -704,22 +714,27 @@ class Importer(beangulp.Importer):
                 )
                 lotpostings = [
                     data.Posting(
-                        self.get_asset_account(symbol),
+                        # self.get_asset_account(symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=symbol),
                         quantity,
                         cost,
                         price,
                         None,
-                        {"ib_cost": row.cost},
+                        # {"ib_cost": row.cost},
+                        None,
                     ),
                 ]
             else:
+                # Sale
+
                 lotpostings = []
                 for clo in lots:
                     try:
                         clo_price = self.get_and_reduce_holding(clo)
                     except ValueError as e:
-                        warnings.warn(str(e))
+                        logger.warning(str(e))
                         clo_price = None
+
                     cost = position.CostSpec(
                         clo_price,
                         number_total=None,
@@ -739,35 +754,42 @@ class Importer(beangulp.Importer):
                             cost,
                             price,
                             None,
-                            {"ib_cost": clo.cost},
+                            # TODO: This is used to match the sale lot.
+                            # {"ib_cost": clo.cost},
+                            None,
                         )
                     )
 
                 lotpostings.append(
                     data.Posting(
-                        self.get_pnl_account(symbol), None, None, None, None, None
+                        # self.get_pnl_account(symbol), None, None, None, None, None
+                        self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol), 
+                        None, None, None, None, None
                     )
                 )
             postings = (
-                [
+                lotpostings
+                + [
+                    data.Posting(
+                        # self.get_fees_account(currency_IBcommision),
+                        self.get_account_name(
+                            AccountTypes.FEES, currency=currency_IBcommision
+                        ),
+                        minus(commission),
+                        None,
+                        None,
+                        # "C",
+                        None,
+                        None,
+                    )
+                ]
+                + [
                     data.Posting(
                         self.get_account_name(AccountTypes.CASH, currency=currency),
                         net_cash,
                         None,
                         None,
                         None,
-                        None,
-                    )
-                ]
-                + lotpostings
-                + [
-                    data.Posting(
-                        # self.get_fees_account(currency_IBcommision),
-                        self.get_account_name(AccountTypes.FEES, currency=currency_IBcommision),
-                        minus(commission),
-                        None,
-                        None,
-                        "C",
                         None,
                     )
                 ]
@@ -828,6 +850,16 @@ class Importer(beangulp.Importer):
                     )
         return result
 
+    def add_holding(self, row):
+        holdings = self.holdings_map[
+            (row.dateTime.date(), get_currency_from_symbol(row.symbol))
+        ]
+        for holding in holdings:
+            if holding[2] == row.cost / row.quantity:
+                holding[0] += row.quantity
+                return
+        holdings.append([row.quantity, row.tradePrice, row.cost / row.quantity])
+
     def get_and_reduce_holding(self, lot):
         holdings = self.holdings_map[
             (lot.openDateTime.date(), get_currency_from_symbol(lot.symbol))
@@ -856,7 +888,19 @@ class Importer(beangulp.Importer):
         raise ValueError(
             f"do not have {lot.symbol} bought at {lot.openDateTime.date()}: want {lot.quantity} at {lot.cost} ({lot.cost / lot.quantity} per unit). have {holdings}"
         )
-    
+
+    def _adjust_holding(self, holdings_map, date, symbol, quantity, price, real_price):
+        lst = holdings_map[(date, symbol)]
+        for i, (u, _, rp) in enumerate(lst):
+            if round(rp, 4) == round(real_price, 4) or (
+                u == quantity and round(rp, 2) == round(real_price, 2)
+            ):
+                lst[i][0] += quantity
+                if lst[i][0] == 0:
+                    lst.pop(i)
+                return
+        holdings_map[(date, symbol)].append([quantity, price, real_price])
+
     def get_balance_assertion_date(self, cash_report) -> datetime.date:
         """Get the date to use for balance assertions."""
         summary = cash_report[0]

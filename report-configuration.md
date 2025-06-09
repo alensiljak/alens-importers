@@ -72,6 +72,7 @@ Options: Execution, Closed Lots
 - Quantity
 - TradePrice
 - TradeMoney
+- Open/Close Indicator
 - Proceeds
 - IBCommission
 - IBCommissionCurrency
