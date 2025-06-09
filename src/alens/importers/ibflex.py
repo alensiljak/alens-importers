@@ -703,6 +703,9 @@ class Importer(beangulp.Importer):
             # assert isinstance(row.tradeDate, datetime.date)
             assert isinstance(row.dateTime, datetime.date)
             date = row.dateTime.date()
+            # book symbol
+            bc_symbol = self.isin_to_symbol[row.isin]
+            account_symbol = format_symbol_for_account_name(bc_symbol)
 
             if row.openCloseIndicator == OpenClose.OPEN:
                 # Purchase
@@ -719,7 +722,7 @@ class Importer(beangulp.Importer):
                 lotpostings = [
                     data.Posting(
                         # self.get_asset_account(symbol),
-                        self.get_account_name(AccountTypes.STOCK, symbol=symbol),
+                        self.get_account_name(AccountTypes.STOCK, symbol=account_symbol),
                         quantity,
                         cost,
                         # price,
@@ -800,7 +803,6 @@ class Importer(beangulp.Importer):
                 ]
             )
 
-            bc_symbol = self.isin_to_symbol[row.isin]
             payee = f"Buy {bc_symbol}"
             
             transactions.append(
