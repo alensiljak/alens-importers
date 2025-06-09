@@ -26,7 +26,7 @@ ibflex_config = {
     "interest_account": "Income:Investments:Interest:IB:{symbol}",
     "capgain_account": "Income:Investment:Capital-Gains:IB:{currency}",
     "broker_interest_account": "Income:Investments:Interest:IB:Cash",
-    "fees_account": "Expenses:Commissions:IB",
+    "fees_account": "Expenses:Financial:IB",
     "whtax_account": "Expenses:Investments:IB:WithholdingTax",
     "txfer-EUR": "Assets:Bank-Accounts:EUR",
     "txfer-AUD": "Assets:Bank-Accounts:AUD",

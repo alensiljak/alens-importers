@@ -4,5 +4,5 @@
 
 2025-03-25 * "VHY" "BUY 12 VHY @ 73.3 AUD"
   Assets:Investments:IB:Stocks:VHY             12 VHY {73.3 AUD}
-  Expenses:Commissions:IB              5.53991185 AUD
+  Expenses:Financial:IB                5.53991185 AUD
   Assets:Investments:IB:Cash-AUD    -885.13991185 AUD

@@ -3,5 +3,5 @@
 ;; Name: simple-div.xml
 
 2025-02-20 * "OPI distribution" ""
-  Income:Investments:Dividend:IB:USD:OPI  -0.52 USD
   Assets:Investments:IB:Cash-USD           0.52 USD
+  Income:Investments:Dividend:IB:USD:OPI  -0.52 USD

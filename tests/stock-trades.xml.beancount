@@ -3,6 +3,6 @@
 ;; Name: stock-trades.xml
 
 2025-06-06 * "PFXF" "BUY 4 PFXF @ 16.935 USD"
-  Assets:Investments:IB:Stocks:PFXF       4 PFXF {16.935 USD, 2025-06-09} @ 16.935 USD
-  Expenses:Commissions:IB              0.20 USD
+  Assets:Investments:IB:Stocks:PFXF       4 PFXF {16.935 USD, 2025-06-09}
+  Expenses:Financial:IB                0.20 USD
   Assets:Investments:IB:Cash-USD     -67.94 USD

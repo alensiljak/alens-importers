@@ -3,5 +3,5 @@
 ;; Name: simple-whtax.xml
 
 2025-02-20 * "OPI distribution" ""
-  Expenses:Investments:IB:WithholdingTax   0.08 USD
   Assets:Investments:IB:Cash-USD          -0.08 USD
+  Expenses:Investments:IB:WithholdingTax   0.08 USD

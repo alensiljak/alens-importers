@@ -3,7 +3,7 @@
 ;; Name: commission-adjustment.xml
 
 2025-05-08 * "IB Commission Adjustment" "Refund (DES, 19, 2025-04-08)"
-  Expenses:Commissions:IB         -0.37013125 USD
+  Expenses:Financial:IB           -0.37013125 USD
   Assets:Investments:IB:Cash-USD   0.37013125 USD
 
 2025-05-22 balance Assets:Investments:IB:Cash-AUD                  100 AUD
