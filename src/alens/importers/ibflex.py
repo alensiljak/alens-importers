@@ -800,12 +800,16 @@ class Importer(beangulp.Importer):
                 ]
             )
 
+            bc_symbol = self.isin_to_symbol[row.isin]
+            payee = f"Buy {bc_symbol}"
+            
             transactions.append(
                 data.Transaction(
                     data.new_metadata("trade", 0),
                     date,
                     flags.FLAG_OKAY,
-                    symbol,  # payee
+                    # symbol,  # payee
+                    payee,
                     " ".join([op, quantity.to_string(), "@", price.to_string()]),
                     data.EMPTY_SET,
                     data.EMPTY_SET,
