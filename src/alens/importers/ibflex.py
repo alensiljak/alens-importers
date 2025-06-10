@@ -421,6 +421,7 @@ class Importer(beangulp.Importer):
                 final_tx = group[0]
             except IndexError:
                 continue
+            # Remove other transactions.
             for txn in group:
                 if txn != final_tx:
                     final_tx.postings.extend(txn.postings)
@@ -431,11 +432,17 @@ class Importer(beangulp.Importer):
             for p in final_tx.postings:
                 grouped_postings[p.account].append(p)
             final_tx.postings.clear()
+
             for account, postings in grouped_postings.items():
+                # Round the amounts to 2 decimal places.
+                amount_: amount.Amount = reduce(amount_add, (p.units for p in postings)),  # type: ignore
+                number = amount_[0].number.quantize(Decimal("0.001")) # type: ignore
+                amount_ = amount.Amount(number, amount_[0].currency) # type: ignore
+                # Create posting.
                 final_tx.postings.append(
                     data.Posting(
                         account,
-                        reduce(amount_add, (p.units for p in postings)),  # type: ignore
+                        amount_,
                         None,
                         None,
                         None,
@@ -1237,12 +1244,12 @@ def reduce(function, sequence, initial=_initial_missing):
     return value
 
 
-def amount_add(a1, a2):
+def amount_add(a1: amount.Amount, a2: amount.Amount) -> amount.Amount:
     """
     add two amounts
     """
     if a1.currency == a2.currency:
-        quant = a1.number + a2.number
+        quant = a1.number + a2.number   # type: ignore
         return amount.Amount(quant, a1.currency)
     else:
         raise ValueError(
