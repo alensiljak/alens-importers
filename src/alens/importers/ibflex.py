@@ -1112,7 +1112,6 @@ class Importer(beangulp.Importer):
             postings,
         )
 
-
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
         logger.debug(f"Deduplicating {len(entries)} entries")
