@@ -99,3 +99,9 @@ def test_commissions():
     """Commissions + Taxes"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "commissions.xml")
+
+
+def test_combine_fx():
+    """Test combining forex transactions"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "forex-combine.xml")

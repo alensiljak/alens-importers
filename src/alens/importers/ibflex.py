@@ -112,6 +112,7 @@ class Importer(beangulp.Importer):
         )
 
         transactions = self.merge_dividend_and_withholding(transactions)
+        transactions = self.merge_forex(transactions)
         # TODO: check this
         # # self.adjust_closing_trade_cost_basis(transactions)
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
@@ -346,7 +347,8 @@ class Importer(beangulp.Importer):
                     del t.meta["descr"]
 
     def merge_dividend_and_withholding(self, entries):
-        """This merges together transactions for earned dividends with the witholding tax ones,
+        """
+        This merges together transactions for earned dividends with the witholding tax ones,
         as they can be on different lines in the cash transactions statement.
         """
         grouped = defaultdict(list)
@@ -398,6 +400,74 @@ class Importer(beangulp.Importer):
             # add the additional postings
             div_tx.postings.extend(additional_postings)
         return entries
+
+    def merge_forex(self, transactions):
+        """
+        Merge forex transactions for the same day and currency pair.
+        """
+        grouped = defaultdict(list)
+        for txn in transactions:
+            if not isinstance(txn, data.Transaction):
+                continue
+            if "filename" in txn.meta and txn.meta.get("filename") == "FX Transaction":
+                # Group by date and payee (currency pair)
+                grouped[(txn.date, txn.payee)].append(txn)
+        for group in grouped.values():
+            if len(group) < 2:
+                continue
+            # merge postings into one transaction
+            try:
+                # final_tx = [txn for txn in group if "div" in txn.meta][0]
+                final_tx = group[0]
+            except IndexError:
+                continue
+            for txn in group:
+                if txn != final_tx:
+                    final_tx.postings.extend(txn.postings)
+                    transactions.remove(txn)
+
+            # merge postings with the same account
+            grouped_postings = defaultdict(list)
+            for p in final_tx.postings:
+                grouped_postings[p.account].append(p)
+            final_tx.postings.clear()
+            for account, postings in grouped_postings.items():
+                final_tx.postings.append(
+                    data.Posting(
+                        account,
+                        reduce(amount_add, (p.units for p in postings)),  # type: ignore
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                )
+            # There should be only two postings after grouping.
+            assert len(final_tx.postings) == 2
+            # Append the price information.
+            # Find the posting with negative amount.
+            p_with_price: data.Posting | None = None
+            price_info: amount.Amount | None = None
+            for p in final_tx.postings:
+                if p.units.number < 0:
+                    p_with_price = p
+                else:
+                    price_info = amount.Amount(p.units.number, p.units.currency)
+
+            assert p_with_price is not None
+            assert price_info is not None
+            for i in range(len(final_tx.postings)):
+                if final_tx.postings[i] == p_with_price:
+                    number: Decimal = price_info.number / p_with_price.units.number # type: ignore
+                    number = number.quantize(Decimal("0.00001"))
+                    number = abs(number)
+                    price = amount.Amount(
+                        number,
+                        price_info.currency,
+                    )
+                    final_tx.postings[i] = final_tx.postings[i]._replace(price=price)
+
+        return transactions
 
     def date(self, filepath: str) -> datetime.date | None:
         """Archival date of the file"""
@@ -664,7 +734,7 @@ class Importer(beangulp.Importer):
         Tries to keep track of available holdings to disambiguate sales when lots are not enough,
         e.g. when there were multiple buys of the same symbol on the specific date.
         Currently, it does not take into account comission when calculating cost for stocks,
-        just the trade price. It keeps the "real" cost as "ib_cost" metadata field though, 
+        just the trade price. It keeps the "real" cost as "ib_cost" metadata field though,
         which might be utilized in the future.
         It is mostly because I find the raw unafected price nicer to see in my beancount file.
         It also creates the fee posting for comission with "C" flag to distinguish it from other postings.
@@ -722,7 +792,9 @@ class Importer(beangulp.Importer):
                 lotpostings = [
                     data.Posting(
                         # self.get_asset_account(symbol),
-                        self.get_account_name(AccountTypes.STOCK, symbol=account_symbol),
+                        self.get_account_name(
+                            AccountTypes.STOCK, symbol=account_symbol
+                        ),
                         quantity,
                         cost,
                         # price,
@@ -771,8 +843,12 @@ class Importer(beangulp.Importer):
                 lotpostings.append(
                     data.Posting(
                         # self.get_pnl_account(symbol), None, None, None, None, None
-                        self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol), 
-                        None, None, None, None, None
+                        self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol),
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
                     )
                 )
             postings = (
@@ -804,7 +880,7 @@ class Importer(beangulp.Importer):
             )
 
             payee = f"{action} {bc_symbol}"
-            
+
             transactions.append(
                 data.Transaction(
                     data.new_metadata("trade", 0),
@@ -940,7 +1016,9 @@ class Importer(beangulp.Importer):
                 transactions.append(self.process_issue_change(action_group))
             elif row.type == Reorg.RIGHTSISSUE:
                 # Ignore?
-                logger.warning(f"ignoring rights issue: {row.dateTime}, {row.description}")
+                logger.warning(
+                    f"ignoring rights issue: {row.dateTime}, {row.description}"
+                )
             else:
                 raise RuntimeError(f"unknown corporate action type: {row.type}")
         return transactions
@@ -1030,7 +1108,12 @@ class Importer(beangulp.Importer):
             data.Posting(
                 # self.get_pnl_account(symbol),
                 self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol),
-                None, None, None, None, None)
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
         )
         row = action_group[1]
         symbol = get_currency_from_symbol(row.symbol)
