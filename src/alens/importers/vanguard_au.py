@@ -72,9 +72,9 @@ class Importer(beangulp.Importer):
 
         return identify(matchers, None, cache.get_file(filepath))
 
-    def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
-        """Extract the data from the given file"""
-        pass
+    # def extract(self, filepath: str, existing: data.Entries) -> data.Entries:
+    #     """Extract the data from the given file"""
+    #     pass
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
