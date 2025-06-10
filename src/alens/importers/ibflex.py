@@ -436,7 +436,8 @@ class Importer(beangulp.Importer):
             for account, postings in grouped_postings.items():
                 # Round the amounts to 2 decimal places.
                 amount_: amount.Amount = reduce(amount_add, (p.units for p in postings)),  # type: ignore
-                number = amount_[0].number.quantize(Decimal("0.001")) # type: ignore
+                number = amount_[0].number.quantize(Decimal("0.0001")) # type: ignore
+                number = number.normalize()
                 amount_ = amount.Amount(number, amount_[0].currency) # type: ignore
                 # Create posting.
                 final_tx.postings.append(
