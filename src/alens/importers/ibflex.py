@@ -1028,7 +1028,8 @@ class Importer(beangulp.Importer):
                     f"ignoring rights issue: {row.dateTime}, {row.description}"
                 )
             else:
-                raise RuntimeError(f"unknown corporate action type: {row.type}")
+                # Just log to the console.
+                logger.warning(f"unknown corporate action type: {row.type}")
         return transactions
 
     def process_stock_forwardsplit(self, row):
