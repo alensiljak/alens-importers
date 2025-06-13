@@ -95,9 +95,13 @@ Options: Transfer
 
 ## Delivery Configuration
 - Accounts Format XML
+- Period: Last 30 Days
+
+When using
 - Period Last N Calendar Days
 - Number of Days 120
-
+the automatic download from the Flex Web service returns the data for the last day only.
+It is advised to use a fixed time period instead.
 
 ## General Configuration
 - Date Format `yyyy-MM-dd`
