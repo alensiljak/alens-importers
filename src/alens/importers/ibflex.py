@@ -244,7 +244,9 @@ class Importer(beangulp.Importer):
 
         # Get the beancount symbol, for use in the book.
         b_symbol = self.isin_to_symbol.get(isin)
-        assert isinstance(b_symbol, str)
+        #assert isinstance(b_symbol, str)
+        if b_symbol is None:
+            raise ValueError(f"No symbol found for ISIN {isin}")
         acc_symbol = format_symbol_for_account_name(b_symbol)
 
         if row.type == CashAction.WHTAX:
@@ -525,9 +527,10 @@ class Importer(beangulp.Importer):
             try:
                 symbol = self.isin_to_symbol[row.isin]
             except KeyError as e:
-                logger.error(f"Missing symbol entry for {row.isin}:")
+                logger.error(f"Missing symbol entry for {row.isin}, {row.symbol}:")
                 logger.warning(f"['', '{row.isin}'],")
-                raise e
+                #raise e
+                symbol = row.symbol
 
             acct_symbol = format_symbol_for_account_name(symbol)
             account = self.get_account_name(AccountTypes.STOCK, acct_symbol)
