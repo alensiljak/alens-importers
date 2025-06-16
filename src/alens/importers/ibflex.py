@@ -782,12 +782,12 @@ class Importer(beangulp.Importer):
             assert isinstance(row.dateTime, datetime.date)
             date = row.dateTime.date()
             # book symbol
-            if row.symbol in self.isin_to_symbol:
-                bc_symbol = self.isin_to_symbol[row.symbol]
+            if row.isin in self.isin_to_symbol:
+                bc_symbol = self.isin_to_symbol[row.isin]
                 account_symbol = format_symbol_for_account_name(bc_symbol)
             else:
                 logger.warning(
-                    f"Unknown symbol traded: {row.symbol}"
+                    f"Unknown symbol traded: {row.symbol} ({row.isin})"
                 )
                 bc_symbol = row.symbol or "UNKNOWN"
                 account_symbol = format_symbol_for_account_name(bc_symbol)
@@ -1036,7 +1036,7 @@ class Importer(beangulp.Importer):
                 )
             else:
                 # Just log to the console.
-                logger.warning(f"unknown corporate action type: {row.type}")
+                logger.warning(f"unknown corporate action type: {row.type} for {row.symbol}")
         return transactions
 
     def process_stock_forwardsplit(self, row):
