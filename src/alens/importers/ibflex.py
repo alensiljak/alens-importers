@@ -786,6 +786,9 @@ class Importer(beangulp.Importer):
                 bc_symbol = self.isin_to_symbol[row.symbol]
                 account_symbol = format_symbol_for_account_name(bc_symbol)
             else:
+                logger.warning(
+                    f"Unknown symbol traded: {row.symbol}"
+                )
                 bc_symbol = row.symbol or "UNKNOWN"
                 account_symbol = format_symbol_for_account_name(bc_symbol)
 
