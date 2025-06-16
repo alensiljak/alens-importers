@@ -989,7 +989,7 @@ class Importer(beangulp.Importer):
                 holding[0] -= lot.quantity
             return price
         raise ValueError(
-            f"do not have {lot.symbol} bought at {lot.openDateTime.date()}: want {lot.quantity} at {lot.cost} ({lot.cost / lot.quantity} per unit). have {holdings}"
+            f"do not have {lot.symbol} {{ {lot.openDateTime.date()} }}: want {lot.quantity} at {lot.cost} ({lot.cost / lot.quantity} per unit). have {holdings}"
         )
 
     def _adjust_holding(self, holdings_map, date, symbol, quantity, price, real_price):
