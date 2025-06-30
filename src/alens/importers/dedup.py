@@ -42,6 +42,4 @@ def deduplicate(entries: data.Entries, existing: data.Entries) -> None:
         key = _get_transaction_key(entry)
         if key and key in existing_transactions_map:
             entry.meta[DUPLICATE] = True
-            target_transaction = existing_transactions_map[key]
-            target_transaction.meta[DUPLICATE] = True
             del existing_transactions_map[key] # Remove to prevent re-matching
