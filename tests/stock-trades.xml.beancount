@@ -3,7 +3,7 @@
 ;; Name: stock-trades.xml
 
 2025-03-17 * "Buy VHY.AX" ""
-  Assets:Investments:IB:Stocks:VHY-AX             12 VHY {71.99 AUD}
+  Assets:Investments:IB:Stocks:VHY-AX             12 VHY.AX {71.99 AUD}
   Expenses:Financial:IB                   5.53919856 AUD
   Assets:Investments:IB:Cash-AUD       -869.41919856 AUD
 
