@@ -11,6 +11,7 @@ fund_codes = [
     ["AMLP", "US00162Q4525"],
     ["OPI", "US67623C1099"],
     ["PFXF", "US92189F4292"],
+    ["VACF.AX", "AU00000VACF9"],
     ["VAP.AX", "AU000000VAP7"],
     ["VGOV_F", "IE00B42WWV65"],
     ["VHY.AX", "AU000000VHY4"],
@@ -58,7 +59,7 @@ def run_importer_test_with_existing_entries(importer, filename):
     """Runs the test with existing entries"""
     # base_path = os.path.abspath(f"tests/importers/{importer.account('')}")
     base_path = os.path.abspath("tests/")
-    expected_filename = os.path.join(base_path, f"{filename}.beancount")
+    expected_filename = os.path.join(base_path, filename + ".beancount")
     if not os.path.exists(expected_filename):
         raise ValueError(f"Missing expected file: {expected_filename}")
 

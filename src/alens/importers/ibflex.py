@@ -115,6 +115,7 @@ class Importer(beangulp.Importer):
 
         transactions = self.merge_dividend_and_withholding(transactions)
         transactions = self.merge_forex(transactions)
+        transactions = self.merge_trades(transactions)
         # TODO: check this
         # # self.adjust_closing_trade_cost_basis(transactions)
         # return self.autoopen_accounts(transactions, existing_entries) + transactions
@@ -480,6 +481,84 @@ class Importer(beangulp.Importer):
                     final_tx.postings[i] = final_tx.postings[i]._replace(price=price)
 
         return transactions
+
+    def merge_trades(self, transactions):
+        """
+        Merge trades for the same day, symbol, and price.
+        """
+        trade_transactions = []
+        non_trade_transactions = []
+
+        for txn in transactions:
+            if isinstance(txn, data.Transaction) and txn.meta.get("filename", "") == "trade":
+                trade_transactions.append(txn)
+            else:
+                non_trade_transactions.append(txn)
+
+        grouped_trades = defaultdict(list)
+        for txn in trade_transactions:
+            stock_posting = None
+            for p in txn.postings:
+                stock_account_prefix = self.get_account_name(AccountTypes.STOCK, symbol="").rsplit(":", 1)[0]
+                if p.account.startswith(stock_account_prefix) and p.units.currency in self.symbol_to_isin:
+                    stock_posting = p
+                    break
+            
+            if stock_posting:
+                stock_symbol = stock_posting.units.currency
+                trade_price_per_unit = None
+                if stock_posting.cost and stock_posting.cost.number_per is not None:
+                    trade_price_per_unit = stock_posting.cost.number_per
+                elif stock_posting.price and stock_posting.price.number is not None:
+                    trade_price_per_unit = stock_posting.price.number
+                
+                if trade_price_per_unit is not None:
+                    group_key = (txn.date, stock_symbol, trade_price_per_unit)
+                    grouped_trades[group_key].append(txn)
+                else:
+                    # If a trade transaction but no valid stock posting, treat as non-mergeable
+                    non_trade_transactions.append(txn)
+            else:
+                # If not a trade transaction, or no stock posting found, treat as non-mergeable
+                non_trade_transactions.append(txn)
+
+        final_transactions = []
+        for group_key, group_list in grouped_trades.items():
+            if len(group_list) > 1:
+                final_tx = group_list[0]
+                for txn_to_merge in group_list[1:]:
+                    final_tx.postings.extend(txn_to_merge.postings)
+                
+                consolidated_postings = defaultdict(list)
+                for p in final_tx.postings:
+                    consolidated_postings[p.account].append(p)
+
+                final_tx.postings.clear()
+                for account, postings_list in consolidated_postings.items():
+                    total_amount = reduce(amount_add, (p.units for p in postings_list))
+                    
+                    price = postings_list[0].price if postings_list[0].price else None
+                    cost = postings_list[0].cost if postings_list[0].cost else None
+                    flag = postings_list[0].flag if postings_list[0].flag else None
+                    meta = postings_list[0].meta if postings_list[0].meta else None
+
+                    final_tx.postings.append(
+                        data.Posting(
+                            account,
+                            total_amount,
+                            cost,
+                            price,
+                            flag,
+                            meta,
+                        )
+                    )
+                final_transactions.append(final_tx)
+            else:
+                final_transactions.extend(group_list)
+        
+        final_transactions.extend(non_trade_transactions)
+
+        return final_transactions
 
     def date(self, filepath: str) -> datetime.date | None:
         """Archival date of the file"""

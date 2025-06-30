@@ -105,3 +105,8 @@ def test_combine_fx():
     """Test combining forex transactions"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "forex-combine.xml")
+
+def test_stock_trades_merge():
+    """Merge stock trades"""
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "stock-trades-merge.xml")
