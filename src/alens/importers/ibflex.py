@@ -19,6 +19,8 @@ from ibflex import TradeType, Types
 from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
 from loguru import logger
 
+import alens.importers.dedup
+
 
 class AccountTypes(str, Enum):
     """Account types in the configuration file"""
@@ -777,14 +779,11 @@ class Importer(beangulp.Importer):
             else:
                 fees = amount.Amount(row.ibCommission, currency_IBcommision)
 
-            assert isinstance(row.quantity, Decimal)
-            quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
-            assert isinstance(row.tradePrice, Decimal)
-            price = amount.Amount(row.tradePrice, currency)
+            # Date
             # assert isinstance(row.tradeDate, datetime.date)
             assert isinstance(row.dateTime, datetime.date)
             date = row.dateTime.date()
-            # book symbol
+            # Account. Use book symbol.
             if row.isin in self.isin_to_symbol:
                 bc_symbol = self.isin_to_symbol[row.isin]
                 account_symbol = format_symbol_for_account_name(bc_symbol)
@@ -794,6 +793,12 @@ class Importer(beangulp.Importer):
                 )
                 bc_symbol = row.symbol or "UNKNOWN"
                 account_symbol = format_symbol_for_account_name(bc_symbol)
+            # amount
+            assert isinstance(row.quantity, Decimal)
+            # quantity = amount.Amount(row.quantity, get_currency_from_symbol(symbol))
+            quantity = amount.Amount(row.quantity, bc_symbol)
+            assert isinstance(row.tradePrice, Decimal)
+            price = amount.Amount(row.tradePrice, currency)
 
             if row.openCloseIndicator == OpenClose.OPEN:
                 # Purchase
@@ -1216,9 +1221,10 @@ class Importer(beangulp.Importer):
 
     def deduplicate(self, entries: data.Entries, existing: data.Entries) -> None:
         """Mark duplicates in extracted entries."""
-        logger.debug(f"Deduplicating {len(entries)} entries")
+        logger.debug(f"Deduplicating {len(entries)} entries against {len(existing)} existing entries")
 
-        return super().deduplicate(entries, existing)
+        # return super().deduplicate(entries, existing)
+        alens.importers.dedup.deduplicate(entries, existing)
 
 
 _initial_missing = object()
