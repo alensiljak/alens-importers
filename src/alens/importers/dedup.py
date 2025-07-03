@@ -13,10 +13,15 @@ def _get_transaction_key(t: data.Transaction):
     if not isinstance(t, data.Transaction):
         return None
 
-    # Sort postings to ensure consistent key generation regardless of order
     def _get_posting_key(p: data.Posting):
-        return (p.account, str(p.units.number), p.units.currency)
+        if not p.units:
+            return (p.account, "", "")
 
+        number = str(p.units.number) if p.units.number is not None else ""
+        currency = p.units.currency if p.units.currency else ""
+        return (p.account, number, currency)
+
+    # Sort postings to ensure consistent key generation regardless of order
     filtered_postings = [p for p in t.postings if not p.account.startswith('Equity:Currency')]
     postings_sorted = tuple(sorted([_get_posting_key(p) for p in filtered_postings]))
     return (t.date, postings_sorted)
