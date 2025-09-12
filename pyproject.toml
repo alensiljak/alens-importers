@@ -3,7 +3,7 @@ name = "alens-importers"
 version = "0.9.1"
 description = "Importers for Beancount's beangulp"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "beancount>=3.1.0",
     "beangulp>=0.2.0",
