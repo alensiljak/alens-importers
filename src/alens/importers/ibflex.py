@@ -20,6 +20,7 @@ from ibflex.enums import BuySell, CashAction, OpenClose, Reorg
 from loguru import logger
 
 import alens.importers.dedup
+from alens.importers.utilities import get_number_of_decimal_places
 
 
 class AccountTypes(str, Enum):
@@ -1343,21 +1344,6 @@ def reduce(function, sequence, initial=_initial_missing):
         value = function(value, element)
 
     return value
-
-
-def get_number_of_decimal_places(number: Decimal) -> int:
-    """
-    Get the number of decimal places in a Decimal number.
-    
-    Args:
-        number: A Decimal number
-        
-    Returns:
-        The number of decimal places in the number
-    """
-    if '.' in str(number):
-        return len(str(number).split('.')[1])
-    return 0
 
 
 def format_decimal_for_beancount(number: Decimal) -> Decimal:
