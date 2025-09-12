@@ -1,7 +1,9 @@
 """Test the ibflex importer"""
+import pytest
 from alens.importers import ibflex
 
 from tests.test_setup import ibflex_config, run_importer_test_with_existing_entries
+from tests.testutils import run_test
 
 
 # def test_run_importer():
@@ -110,3 +112,9 @@ def test_stock_trades_merge():
     """Merge stock trades"""
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "stock-trades-merge.xml")
+
+
+@pytest.mark.skip(reason="An issue. Not fixed yet!")
+def test_one_decimal():
+    """Numbers should not have only one decimal!"""
+    run_test("one-decima.xml")
