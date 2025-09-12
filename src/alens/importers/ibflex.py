@@ -225,7 +225,11 @@ class Importer(beangulp.Importer):
         """
         assert isinstance(row.currency, str)
         assert isinstance(row.amount, Decimal)
-        amount_ = amount.Amount(row.amount, row.currency)
+        
+        # Ensure consistent decimal formatting
+        formatted_amount = format_decimal_for_beancount(row.amount)
+        
+        amount_ = amount.Amount(formatted_amount, row.currency)
 
         text = row.description
         text = self.groom_dividend_description(text)
@@ -1341,12 +1345,55 @@ def reduce(function, sequence, initial=_initial_missing):
     return value
 
 
+def get_number_of_decimal_places(number: Decimal) -> int:
+    """
+    Get the number of decimal places in a Decimal number.
+    
+    Args:
+        number: A Decimal number
+        
+    Returns:
+        The number of decimal places in the number
+    """
+    if '.' in str(number):
+        return len(str(number).split('.')[1])
+    return 0
+
+
+def format_decimal_for_beancount(number: Decimal) -> Decimal:
+    """
+    Format a decimal number to ensure at least 2 decimal places if it has any decimal places.
+    
+    Args:
+        number: A Decimal number
+        
+    Returns:
+        The formatted Decimal number with at least 2 decimal places if needed
+    """
+    # If the number has decimal places, ensure at least 2 decimal places
+    decimal_places = get_number_of_decimal_places(number)
+    if decimal_places > 0 and decimal_places < 2:
+        return number.quantize(Decimal('0.00'))
+    return number
+
+
 def amount_add(a1: amount.Amount, a2: amount.Amount) -> amount.Amount:
     """
     add two amounts
     """
     if a1.currency == a2.currency:
         quant = a1.number + a2.number   # type: ignore
+        
+        # Ensure consistent decimal formatting
+        # If either number has decimal places, ensure at least 2 decimal places in the result
+        if '.' in str(a1.number) or '.' in str(a2.number):
+            # Check how many decimal places each number has
+            a1_decimals = get_number_of_decimal_places(a1.number)
+            a2_decimals = get_number_of_decimal_places(a2.number)
+            # Use at least 2 decimal places, or more if needed
+            decimal_places = max(2, a1_decimals, a2_decimals)
+            quant = quant.quantize(Decimal('0.' + '0' * decimal_places))
+        
         return amount.Amount(quant, a1.currency)
     else:
         raise ValueError(

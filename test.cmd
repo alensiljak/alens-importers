@@ -1,2 +1,2 @@
 :: Run tests
-uv run pytest
+uv run pytest %*

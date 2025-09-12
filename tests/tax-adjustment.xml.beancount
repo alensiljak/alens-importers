@@ -4,6 +4,6 @@
 
 2025-02-28 * "AMLP distribution" "USD 0.94 PER SHARE - US TAX"
   Assets:Investments:IB:Cash-USD           0.39 USD
-  Expenses:Investments:IB:WithholdingTax    6.1 USD
+  Expenses:Investments:IB:WithholdingTax   6.10 USD
   Expenses:Investments:IB:WithholdingTax  -6.49 USD
     date: 2024-05-15
