@@ -70,7 +70,7 @@ class Importer(beangulp.Importer):
 
         matchers = {
             # File is xml
-            "mime": [re.compile(r"text/xml")],
+            "mime": [re.compile(r"application/xml")],
             # The main XML tag is FlexQueryResponse
             "content": [re.compile(r"<FlexQueryResponse ")],
         }
