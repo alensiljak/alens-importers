@@ -3,6 +3,7 @@ Creating IBKR importer from scratch.
 """
 
 from collections import defaultdict
+from ctypes import ArgumentError
 import os
 import re
 import datetime
@@ -68,10 +69,16 @@ class Importer(beangulp.Importer):
         """Indicates whether the importer can handle the given file"""
         logger.debug(f"Identifying {filepath}")
 
+        mime_type = self.config.get('mime_type')
+        if not mime_type:
+            raise ArgumentError('Mime type for the input file not specified in configuration!')
+
         matchers = {
-            # File is xml
-            "mime": [re.compile(r"application/xml"),
-                re.compile(r"text/xml")],
+            # File is xml.
+            # The exact spec does not work as different OS returns different mime type.
+            # [re.compile(r"application/xml"),
+            # re.compile(r"text/xml")],
+            "mime": re.compile(mime_type),
             # The main XML tag is FlexQueryResponse
             "content": [re.compile(r"<FlexQueryResponse ")],
         }
