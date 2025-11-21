@@ -70,7 +70,8 @@ class Importer(beangulp.Importer):
 
         matchers = {
             # File is xml
-            "mime": [re.compile(r"application/xml")],
+            "mime": [re.compile(r"application/xml"),
+                re.compile(r"text/xml")],
             # The main XML tag is FlexQueryResponse
             "content": [re.compile(r"<FlexQueryResponse ")],
         }
@@ -226,10 +227,10 @@ class Importer(beangulp.Importer):
         """
         assert isinstance(row.currency, str)
         assert isinstance(row.amount, Decimal)
-        
+
         # Ensure consistent decimal formatting
         formatted_amount = format_decimal_for_beancount(row.amount)
-        
+
         amount_ = amount.Amount(formatted_amount, row.currency)
 
         text = row.description
@@ -508,7 +509,7 @@ class Importer(beangulp.Importer):
                 if p.account.startswith(stock_account_prefix) and p.units.currency in self.symbol_to_isin:
                     stock_posting = p
                     break
-            
+
             if stock_posting:
                 stock_symbol = stock_posting.units.currency
                 trade_price_per_unit = None
@@ -516,7 +517,7 @@ class Importer(beangulp.Importer):
                     trade_price_per_unit = stock_posting.cost.number_per
                 elif stock_posting.price and stock_posting.price.number is not None:
                     trade_price_per_unit = stock_posting.price.number
-                
+
                 if trade_price_per_unit is not None:
                     group_key = (txn.date, stock_symbol, trade_price_per_unit)
                     grouped_trades[group_key].append(txn)
@@ -533,7 +534,7 @@ class Importer(beangulp.Importer):
                 final_tx = group_list[0]
                 for txn_to_merge in group_list[1:]:
                     final_tx.postings.extend(txn_to_merge.postings)
-                
+
                 consolidated_postings = defaultdict(list)
                 for p in final_tx.postings:
                     consolidated_postings[p.account].append(p)
@@ -541,7 +542,7 @@ class Importer(beangulp.Importer):
                 final_tx.postings.clear()
                 for account, postings_list in consolidated_postings.items():
                     total_amount = reduce(amount_add, (p.units for p in postings_list))
-                    
+
                     price = postings_list[0].price if postings_list[0].price else None
                     cost = postings_list[0].cost if postings_list[0].cost else None
                     flag = postings_list[0].flag if postings_list[0].flag else None
@@ -560,7 +561,7 @@ class Importer(beangulp.Importer):
                 final_transactions.append(final_tx)
             else:
                 final_transactions.extend(group_list)
-        
+
         final_transactions.extend(non_trade_transactions)
 
         return final_transactions
@@ -1349,10 +1350,10 @@ def reduce(function, sequence, initial=_initial_missing):
 def format_decimal_for_beancount(number: Decimal) -> Decimal:
     """
     Format a decimal number to ensure at least 2 decimal places if it has any decimal places.
-    
+
     Args:
         number: A Decimal number
-        
+
     Returns:
         The formatted Decimal number with at least 2 decimal places if needed
     """
@@ -1369,7 +1370,7 @@ def amount_add(a1: amount.Amount, a2: amount.Amount) -> amount.Amount:
     """
     if a1.currency == a2.currency:
         quant = a1.number + a2.number   # type: ignore
-        
+
         # Ensure consistent decimal formatting
         # If either number has decimal places, ensure at least 2 decimal places in the result
         if '.' in str(a1.number) or '.' in str(a2.number):
@@ -1379,7 +1380,7 @@ def amount_add(a1: amount.Amount, a2: amount.Amount) -> amount.Amount:
             # Use at least 2 decimal places, or more if needed
             decimal_places = max(2, a1_decimals, a2_decimals)
             quant = quant.quantize(Decimal('0.' + '0' * decimal_places))
-        
+
         return amount.Amount(quant, a1.currency)
     else:
         raise ValueError(
