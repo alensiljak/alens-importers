@@ -69,7 +69,7 @@ class Importer(beangulp.Importer):
         """Indicates whether the importer can handle the given file"""
         logger.debug(f"Identifying {filepath}")
 
-        mime_type = self.config.get('mime_type')
+        mime_type: str = self.config.get('mime_type')
         if not mime_type:
             raise ArgumentError('Mime type for the input file not specified in configuration!')
 
@@ -78,7 +78,7 @@ class Importer(beangulp.Importer):
             # The exact spec does not work as different OS returns different mime type.
             # [re.compile(r"application/xml"),
             # re.compile(r"text/xml")],
-            "mime": re.compile(mime_type),
+            "mime": [re.compile(mime_type)],
             # The main XML tag is FlexQueryResponse
             "content": [re.compile(r"<FlexQueryResponse ")],
         }
