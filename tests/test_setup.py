@@ -22,7 +22,6 @@ interest_symbols = [
 ]
 
 ibflex_config = {
-    "mime_type": "text/xml",
     "cash_account": "Assets:Investments:IB:Cash-{currency}",
     "stock_account": "Assets:Investments:IB:Stocks:{symbol}",
     "dividend_account": "Income:Investments:Dividend:IB:{currency}:{symbol}",
