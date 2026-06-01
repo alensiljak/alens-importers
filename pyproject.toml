@@ -1,13 +1,13 @@
 [project]
 name = "alens-importers"
-version = "0.10.6"
+version = "0.10.7"
 description = "Importers for Beancount's beangulp"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beancount>=3.1.0",
     "beangulp>=0.2.0",
-    "ibflex",
+    "ibflex>=1.1",
     "loguru>=0.7.3",
     "requests>=2.32.3",
 ]

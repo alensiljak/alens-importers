@@ -257,6 +257,7 @@ class Importer(beangulp.Importer):
         b_symbol = self.isin_to_symbol.get(isin)
         #assert isinstance(b_symbol, str)
         if b_symbol is None:
+            self.logger.warning(f"ISIN {isin} not found in {self.isin_to_symbol}")
             raise ValueError(f"No symbol found for ISIN {isin}")
         acc_symbol = format_symbol_for_account_name(b_symbol)
 
