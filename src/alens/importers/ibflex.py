@@ -52,8 +52,8 @@ class Importer(beangulp.Importer):
 
         # create symbol dictionaries.
         symbols = self.config.get("symbols")
-        self.symbol_to_isin, self.isin_to_symbol = self.create_symbol_dictionaries(
-            symbols
+        self.symbol_to_isin, self.isin_to_symbol, self.ibkr_symbol_to_bc_symbol = (
+            self.create_symbol_dictionaries(symbols)
         )
 
         super().__init__(**kwargs)
@@ -128,21 +128,52 @@ class Importer(beangulp.Importer):
         return transactions
 
     def create_symbol_dictionaries(
-        self, symbols: list[Tuple[str, str]]
-    ) -> Tuple[dict, dict]:
+        self, symbols: list
+    ) -> Tuple[dict, dict, dict]:
         """
-        Create symbol dictionaries, to fetch Symbols/ISINs
-        Reads array of tuples of (symbol, isin), or array of arrays.
+        Create symbol dictionaries, to fetch Symbols/ISINs.
+
+        Reads entries of either:
+        - (symbol, isin): symbol is used both as the IBKR ticker and the
+          beancount symbol.
+        - (ibkr_symbol, bc_symbol, isin): use this form when IBKR's own
+          ticker (e.g. "VGOV") differs from the desired beancount symbol
+          (e.g. "VGOV.F"), or when the same ISIN is dual-listed under
+          different IBKR tickers (e.g. DGSE.MI / WTED.DE) and needs to map
+          to distinct beancount symbols.
         """
         symbol_to_isin = {}
         isin_to_symbol = {}
+        ibkr_symbol_to_bc_symbol = {}
 
-        # 2. Populate the dictionaries from your list
-        for symbol, isin in symbols:
-            symbol_to_isin[symbol] = isin
-            isin_to_symbol[isin] = symbol
+        for entry in symbols:
+            if len(entry) == 2:
+                ibkr_symbol, isin = entry
+                bc_symbol = ibkr_symbol
+            else:
+                ibkr_symbol, bc_symbol, isin = entry
 
-        return symbol_to_isin, isin_to_symbol
+            symbol_to_isin[bc_symbol] = isin
+            isin_to_symbol[isin] = bc_symbol
+            ibkr_symbol_to_bc_symbol[ibkr_symbol] = bc_symbol
+
+        return symbol_to_isin, isin_to_symbol, ibkr_symbol_to_bc_symbol
+
+    def get_bc_symbol(self, row) -> Optional[str]:
+        """
+        Resolve the beancount symbol for a row that carries both `symbol` and `isin`.
+
+        The same ISIN can be listed under different IBKR ticker symbols on
+        different exchanges (e.g. DGSE.MI and WTED.DE), so `isin_to_symbol`
+        alone is ambiguous. Prefer an exact match on the row's own IBKR
+        symbol - which is registered 1:1 in `ibkr_symbol_to_bc_symbol` - and
+        only fall back to the ISIN lookup when the symbol itself isn't
+        configured.
+        """
+        symbol = getattr(row, "symbol", None)
+        if symbol and symbol in self.ibkr_symbol_to_bc_symbol:
+            return self.ibkr_symbol_to_bc_symbol[symbol]
+        return self.isin_to_symbol.get(row.isin)
 
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
@@ -254,7 +285,7 @@ class Importer(beangulp.Importer):
         tax_reversal_meta = None
 
         # Get the beancount symbol, for use in the book.
-        b_symbol = self.isin_to_symbol.get(isin)
+        b_symbol = self.get_bc_symbol(row)
         #assert isinstance(b_symbol, str)
         if b_symbol is None:
             self.logger.warning(f"ISIN {isin} not found in {self.isin_to_symbol}")
@@ -612,14 +643,11 @@ class Importer(beangulp.Importer):
         date = date + datetime.timedelta(days=1)
 
         for row in rows:
-            # Get the symbol from Beancount by ISIN
-            # row.symbol
-            try:
-                symbol = self.isin_to_symbol[row.isin]
-            except KeyError as e:
+            # Get the symbol from Beancount by symbol/ISIN
+            symbol = self.get_bc_symbol(row)
+            if symbol is None:
                 logger.error(f"Missing symbol entry for {row.isin}, {row.symbol}:")
                 logger.warning(f"['', '{row.isin}'],")
-                #raise e
                 symbol = row.symbol
 
             acct_symbol = format_symbol_for_account_name(symbol)
@@ -872,8 +900,9 @@ class Importer(beangulp.Importer):
             assert isinstance(row.dateTime, datetime.date)
             date = row.dateTime.date()
             # Account. Use book symbol.
-            if row.isin in self.isin_to_symbol:
-                bc_symbol = self.isin_to_symbol[row.isin]
+            resolved_symbol = self.get_bc_symbol(row)
+            if resolved_symbol is not None:
+                bc_symbol = resolved_symbol
                 account_symbol = format_symbol_for_account_name(bc_symbol)
             else:
                 logger.warning(
