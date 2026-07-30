@@ -12,6 +12,8 @@ fund_codes = [
     ["DGSE.MI", "IE00BQZJBM26"],
     ["OPI", "US67623C1099"],
     ["PFXF", "US92189F4292"],
+    ["SDIV", "US37960A6698"],
+    ["SDIV.MI", "IE00077FRP95"],
     ["VACF.AX", "AU00000VACF9"],
     ["VAP.AX", "AU000000VAP7"],
     ["VGOV_F", "IE00B42WWV65"],

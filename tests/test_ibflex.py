@@ -128,3 +128,15 @@ def test_multiple_symbols_one_isin():
     """
     importer = ibflex.Importer(ibflex_config)
     run_importer_test_with_existing_entries(importer, "multiple-symbols-one-isin.xml")
+
+
+def test_multiple_dividends_same_ibkr_symbol():
+    """
+    IBKR can report the same raw ticker (e.g. "SDIV") for two different
+    ISINs (a US listing and an Irish/UCITS listing). Each ISIN must produce
+    its own dividend transaction, with the withholding tax assigned to the
+    correct one (the US listing, in this case) instead of everything being
+    merged into a single transaction.
+    """
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "multiple-divs.xml")

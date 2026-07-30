@@ -144,6 +144,12 @@ class Importer(beangulp.Importer):
         symbols (e.g. DGSE.MI / WTED.DE) - `isin_to_symbols` keeps every
         beancount symbol registered for an ISIN so `get_bc_symbol` can
         disambiguate using the IBKR symbol reported on the row.
+
+        Conversely, the same raw IBKR ticker (e.g. "SDIV") can also be
+        reported by IBKR for two different ISINs (e.g. a US and an Irish
+        listing both booked under the ticker "SDIV"). `symbol_to_isin` is
+        used by `get_bc_symbol` to reject a direct ticker match whose ISIN
+        does not match the row's ISIN, falling back to ISIN-based lookup.
         """
         symbol_to_isin = {}
         isin_to_symbols: dict = defaultdict(list)
@@ -169,14 +175,20 @@ class Importer(beangulp.Importer):
         The same ISIN can be listed under distinct beancount symbols for
         different exchanges (e.g. DGSE.MI and WTED.DE), so the ISIN alone is
         ambiguous. Prefer an exact match on the row's own IBKR symbol -
-        registered 1:1 in `ibkr_symbol_to_bc_symbol` - then fall back to the
-        ISIN's registered beancount symbols, picking the one that contains
-        the row's IBKR symbol (e.g. "DGSE" is contained in "DGSE.MI") when
-        there is more than one candidate.
+        registered 1:1 in `ibkr_symbol_to_bc_symbol` - but only trust it when
+        its configured ISIN also matches the row's ISIN: IBKR can report the
+        same raw ticker (e.g. "SDIV") for two different ISINs (e.g. a US and
+        an Irish listing), so the ticker alone is not always enough. When it
+        doesn't match (or there is no direct ticker mapping), fall back to
+        the ISIN's registered beancount symbols, picking the one that
+        contains the row's IBKR symbol (e.g. "DGSE" is contained in
+        "DGSE.MI") when there is more than one candidate.
         """
         symbol = getattr(row, "symbol", None)
         if symbol and symbol in self.ibkr_symbol_to_bc_symbol:
-            return self.ibkr_symbol_to_bc_symbol[symbol]
+            candidate = self.ibkr_symbol_to_bc_symbol[symbol]
+            if self.symbol_to_isin.get(candidate) == row.isin:
+                return candidate
 
         candidates = self.isin_to_symbol.get(row.isin, [])
         if not candidates:
