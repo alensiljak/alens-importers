@@ -138,12 +138,15 @@ class Importer(beangulp.Importer):
           beancount symbol.
         - (ibkr_symbol, bc_symbol, isin): use this form when IBKR's own
           ticker (e.g. "VGOV") differs from the desired beancount symbol
-          (e.g. "VGOV.F"), or when the same ISIN is dual-listed under
-          different IBKR tickers (e.g. DGSE.MI / WTED.DE) and needs to map
-          to distinct beancount symbols.
+          (e.g. "VGOV.F").
+
+        The same ISIN can also be dual-listed under distinct beancount
+        symbols (e.g. DGSE.MI / WTED.DE) - `isin_to_symbols` keeps every
+        beancount symbol registered for an ISIN so `get_bc_symbol` can
+        disambiguate using the IBKR symbol reported on the row.
         """
         symbol_to_isin = {}
-        isin_to_symbol = {}
+        isin_to_symbols: dict = defaultdict(list)
         ibkr_symbol_to_bc_symbol = {}
 
         for entry in symbols:
@@ -154,26 +157,37 @@ class Importer(beangulp.Importer):
                 ibkr_symbol, bc_symbol, isin = entry
 
             symbol_to_isin[bc_symbol] = isin
-            isin_to_symbol[isin] = bc_symbol
+            isin_to_symbols[isin].append(bc_symbol)
             ibkr_symbol_to_bc_symbol[ibkr_symbol] = bc_symbol
 
-        return symbol_to_isin, isin_to_symbol, ibkr_symbol_to_bc_symbol
+        return symbol_to_isin, dict(isin_to_symbols), ibkr_symbol_to_bc_symbol
 
     def get_bc_symbol(self, row) -> Optional[str]:
         """
         Resolve the beancount symbol for a row that carries both `symbol` and `isin`.
 
-        The same ISIN can be listed under different IBKR ticker symbols on
-        different exchanges (e.g. DGSE.MI and WTED.DE), so `isin_to_symbol`
-        alone is ambiguous. Prefer an exact match on the row's own IBKR
-        symbol - which is registered 1:1 in `ibkr_symbol_to_bc_symbol` - and
-        only fall back to the ISIN lookup when the symbol itself isn't
-        configured.
+        The same ISIN can be listed under distinct beancount symbols for
+        different exchanges (e.g. DGSE.MI and WTED.DE), so the ISIN alone is
+        ambiguous. Prefer an exact match on the row's own IBKR symbol -
+        registered 1:1 in `ibkr_symbol_to_bc_symbol` - then fall back to the
+        ISIN's registered beancount symbols, picking the one that contains
+        the row's IBKR symbol (e.g. "DGSE" is contained in "DGSE.MI") when
+        there is more than one candidate.
         """
         symbol = getattr(row, "symbol", None)
         if symbol and symbol in self.ibkr_symbol_to_bc_symbol:
             return self.ibkr_symbol_to_bc_symbol[symbol]
-        return self.isin_to_symbol.get(row.isin)
+
+        candidates = self.isin_to_symbol.get(row.isin, [])
+        if not candidates:
+            return None
+        if len(candidates) == 1:
+            return candidates[0]
+        if symbol:
+            for bc_symbol in candidates:
+                if symbol in bc_symbol:
+                    return bc_symbol
+        return None
 
     def get_account_name(self, acct_type: AccountTypes, symbol=None, currency=None):
         """Get the account name from the config file"""
@@ -883,7 +897,6 @@ class Importer(beangulp.Importer):
             currency_IBcommision = row.ibCommissionCurrency
             assert isinstance(currency_IBcommision, str)
 
-            symbol = row.symbol
             assert isinstance(row.netCash, Decimal)
             net_cash = amount.Amount(row.netCash, currency)
 
@@ -967,10 +980,10 @@ class Importer(beangulp.Importer):
                     lotpostings.append(
                         data.Posting(
                             # self.get_asset_account(symbol),
-                            self.get_account_name(AccountTypes.STOCK, symbol=symbol),
-                            amount.Amount(
-                                -clo.quantity, get_currency_from_symbol(clo.symbol)
+                            self.get_account_name(
+                                AccountTypes.STOCK, symbol=account_symbol
                             ),
+                            amount.Amount(-clo.quantity, bc_symbol),
                             cost,
                             price,
                             None,
@@ -983,7 +996,7 @@ class Importer(beangulp.Importer):
                 lotpostings.append(
                     data.Posting(
                         # self.get_pnl_account(symbol), None, None, None, None, None
-                        self.get_account_name(AccountTypes.CAPGAIN, symbol=symbol),
+                        self.get_account_name(AccountTypes.CAPGAIN, symbol=bc_symbol),
                         None,
                         None,
                         None,

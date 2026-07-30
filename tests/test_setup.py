@@ -9,12 +9,14 @@ from beangulp.testing import _run, compare_expected
 
 fund_codes = [
     ["AMLP", "US00162Q4525"],
+    ["DGSE.MI", "IE00BQZJBM26"],
     ["OPI", "US67623C1099"],
     ["PFXF", "US92189F4292"],
     ["VACF.AX", "AU00000VACF9"],
     ["VAP.AX", "AU000000VAP7"],
     ["VGOV_F", "IE00B42WWV65"],
     ["VHY.AX", "AU000000VHY4"],
+    ["WTED.DE", "IE00BQZJBM26"],
 ]
 
 interest_symbols = [

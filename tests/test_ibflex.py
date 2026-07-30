@@ -117,3 +117,14 @@ def test_stock_trades_merge():
 def test_one_decimal():
     """Numbers should not have only one decimal!"""
     run_test("one-decimal.xml")
+
+
+def test_multiple_symbols_one_isin():
+    """
+    The same ISIN can be dual-listed under different beancount symbols
+    (e.g. DGSE.MI / WTED.DE). IBKR's report only gives the base ticker
+    (e.g. "DGSE"), so the importer must disambiguate against the
+    configured symbols for that ISIN.
+    """
+    importer = ibflex.Importer(ibflex_config)
+    run_importer_test_with_existing_entries(importer, "multiple-symbols-one-isin.xml")
