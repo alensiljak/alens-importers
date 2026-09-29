@@ -1,0 +1,8 @@
+"Booking Date","Value Date","Partner Name","Partner Iban",Type,"Payment Reference","Account Name","Amount (EUR)","Original Amount","Original Currency","Exchange Rate"
+2026-09-02,2026-09-02,"Lidl DANKT 428",,Presentment,,Card,-10.3,10.3,EUR,1
+2026-09-03,2026-09-02,"Lidl Oesterreich GmbH",,Presentment,,Card,-13.58,13.58,EUR,1
+2026-09-03,2026-09-03,"Equities Settlement account",DE36100110012854407302,"Credit Transfer","N26 cash dividend transaction - transaction ID 52317f89-ca93-d6f2-37c5-e70527dc1228 - ISIN LU0335044896",Card,6.86,,,
+2026-09-03,2026-09-03,"Equities Settlement account",DE36100110012854407302,"Credit Transfer","N26 cash dividend transaction - transaction ID 5e50a8e1-3b2d-47a2-06b1-51ae61f4914d - ISIN IE00BZ163M45",Card,2.04,,,
+2026-09-03,2026-09-03,"Equities Settlement account",DE36100110012854407302,"Credit Transfer","N26 cash dividend transaction - transaction ID 7181bb3c-0466-7ef9-a3c2-572c695a1c93 - ISIN IE00BZ163G84",Card,3.32,,,
+2026-09-03,2026-09-03,"Kürsinger Hütte",,Presentment,,Card,-128,128,EUR,1
+2026-09-03,2026-09-03,Rosehill,,Presentment,,Card,-0.7,0.7,EUR,1
